@@ -15,9 +15,13 @@ import { ROUTES } from "@/constants";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
-  { label: "홈", href: ROUTES.HOME },
-  { label: "탐색", href: ROUTES.GAMES },
-  { label: "내기록", href: ROUTES.MY },
+  { label: "홈",      href: ROUTES.HOME },
+  { label: "탐색",    href: ROUTES.GAMES },
+  { label: "커뮤니티", href: ROUTES.COMMUNITY },
+  { label: "로컬",    href: ROUTES.LOCAL },
+  { label: "쇼핑",    href: ROUTES.SHOP },
+  { label: "중고",    href: ROUTES.USED },
+  { label: "내게임",  href: ROUTES.MY },
 ];
 
 interface GNBProps {

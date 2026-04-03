@@ -3,6 +3,7 @@
 import { ShoppingCart, Heart } from "lucide-react";
 import { buttonVariants } from "@/lib/button-variants";
 import { cn } from "@/lib/utils";
+import { COLLECTION_STATUS_LABEL } from "@/constants";
 import type { CollectionStatus } from "@/types";
 
 interface PurchaseSideCardProps {
@@ -18,11 +19,6 @@ function formatPrice(price: number) {
   return price.toLocaleString("ko-KR") + "원";
 }
 
-const COLLECTION_LABEL: Record<CollectionStatus, string> = {
-  owned: "보유중",
-  wishlist: "위시리스트",
-  completed: "플레이완료",
-};
 
 export default function PurchaseSideCard({
   price,
@@ -64,7 +60,7 @@ export default function PurchaseSideCard({
         >
           <span className="text-caption font-medium text-gray-700">내 컬렉션</span>
           <span className="text-caption text-primary-600 font-semibold">
-            {collectionStatus ? COLLECTION_LABEL[collectionStatus] : "추가하기 +"}
+            {collectionStatus ? COLLECTION_STATUS_LABEL[collectionStatus] : "추가하기 +"}
           </span>
         </button>
 
