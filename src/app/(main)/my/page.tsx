@@ -12,6 +12,7 @@ import LoginPrompt from "@/components/common/LoginPrompt";
 import { buttonVariants } from "@/lib/button-variants";
 import { cn } from "@/lib/utils";
 import { ROUTES, COLLECTION_STATUSES, COLLECTION_STATUS_LABEL } from "@/constants";
+import { useAuthStore } from "@/stores/authStore";
 import type { PlayLog, Collection, Rating, CollectionStatus, Selection } from "@/types";
 
 // Mock 데이터
@@ -88,7 +89,9 @@ function groupByMonth(logs: PlayLog[]) {
 }
 
 export default function MyPage() {
-  const isLoggedIn = true; // TODO: authStore
+  const { isLoggedIn, isLoading } = useAuthStore();
+
+  if (isLoading) return null;
   const [collectionFilter, setCollectionFilter] = useState<CollectionStatus | "all">("all");
 
   if (!isLoggedIn) {

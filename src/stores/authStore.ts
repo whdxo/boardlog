@@ -31,20 +31,24 @@ function wait(ms: number) {
 async function fetchProfileWithRetry(
   supabase: SupabaseClient,
   userId: string,
-  retries = 3
+  retries = 2
 ) {
   for (let attempt = 0; attempt < retries; attempt += 1) {
-    const { data: profile, error } = await supabase
-      .from("profiles")
-      .select(PROFILE_COLUMNS)
-      .eq("id", userId)
-      .maybeSingle();
+    try {
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select(PROFILE_COLUMNS)
+        .eq("id", userId)
+        .maybeSingle();
 
-    if (profile || error || attempt === retries - 1) {
-      return profile ?? null;
+      if (profile || error || attempt === retries - 1) {
+        return profile ?? null;
+      }
+    } catch {
+      return null;
     }
 
-    await wait(250 * (attempt + 1));
+    await wait(300);
   }
 
   return null;
@@ -55,25 +59,27 @@ async function syncAuthState(
   user: User | null,
   set: (partial: Partial<AuthState>) => void
 ) {
-  console.log("[authStore] syncAuthState:start", {
-    userId: user?.id ?? null,
-    email: user?.email ?? null,
-  });
-
   if (!user) {
-    console.log("[authStore] syncAuthState:cleared");
     set({ user: null, profile: null, isLoggedIn: false, isLoading: false });
     return null;
   }
 
-  const profile = await fetchProfileWithRetry(supabase, user.id);
-  console.log("[authStore] syncAuthState:done", {
-    userId: user.id,
-    hasProfile: Boolean(profile),
-    profileId: profile?.id ?? null,
-    nickname: profile?.nickname ?? null,
+  // user_metadata로 즉시 로그인 상태 반영
+  const fallbackProfile: Profile = {
+    id: user.id,
+    email: user.email ?? "",
+    nickname: user.user_metadata?.nickname ?? user.email?.split("@")[0] ?? "사용자",
+    profile_image: null,
+    bio: null,
+  };
+  set({ user, profile: fallbackProfile, isLoggedIn: true, isLoading: false });
+
+  // 백그라운드에서 profiles 테이블 조회
+  fetchProfileWithRetry(supabase, user.id).then((profile) => {
+    if (profile) {
+      set({ profile });
+    }
   });
-  set({ user, profile, isLoggedIn: true, isLoading: false });
 
   return user;
 }
@@ -86,56 +92,31 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   initialize: () => {
     const supabase = createClient();
-
     set({ isLoading: true });
 
-    // 현재 세션 복구
     supabase.auth.getUser().then(({ data: { user } }) => {
-      console.log("[authStore] initialize:getUser", {
-        userId: user?.id ?? null,
-        email: user?.email ?? null,
-      });
       void syncAuthState(supabase, user, set);
     });
 
-    // 인증 상태 변경 구독
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("[authStore] onAuthStateChange", {
-          event,
-          userId: session?.user?.id ?? null,
-          email: session?.user?.email ?? null,
-        });
+      async (_event, session) => {
         await syncAuthState(supabase, session?.user ?? null, set);
       }
     );
 
-    // cleanup 함수 반환
     return () => subscription.unsubscribe();
   },
 
   refreshSession: async () => {
     const supabase = createClient();
     set({ isLoading: true });
-    console.log("[authStore] refreshSession:start");
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    console.log("[authStore] refreshSession:getUser", {
-      userId: user?.id ?? null,
-      email: user?.email ?? null,
-    });
-
+    const { data: { user } } = await supabase.auth.getUser();
     return syncAuthState(supabase, user, set);
   },
 
   signOut: async () => {
     const supabase = createClient();
-    console.log("[authStore] signOut:start");
     await supabase.auth.signOut();
-    console.log("[authStore] signOut:done");
     set({ user: null, profile: null, isLoggedIn: false, isLoading: false });
   },
 }));

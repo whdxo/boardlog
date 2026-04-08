@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, ChevronDown, User } from "lucide-react";
 import { buttonVariants } from "@/lib/button-variants";
@@ -29,19 +28,8 @@ const NAV_LINKS = [
 export default function GNB() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, profile, isLoggedIn, isLoading, signOut } = useAuthStore();
+  const { user, profile, isLoggedIn, signOut } = useAuthStore();
   const displayName = profile?.nickname ?? user?.email?.split("@")[0] ?? "내 계정";
-
-  useEffect(() => {
-    console.log("[GNB] auth state", {
-      pathname,
-      isLoading,
-      isLoggedIn,
-      userId: user?.id ?? null,
-      profileId: profile?.id ?? null,
-      displayName,
-    });
-  }, [displayName, isLoading, isLoggedIn, pathname, profile?.id, user?.id]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -86,7 +74,7 @@ export default function GNB() {
 
         {/* 우측 액션 */}
         <div className="ml-auto flex items-center gap-3">
-          {isLoading ? null : isLoggedIn && user ? (
+          {isLoggedIn && user ? (
             <>
               {/* 알림 */}
               <Link

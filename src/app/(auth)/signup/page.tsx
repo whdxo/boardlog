@@ -41,18 +41,10 @@ export default function SignupPage() {
     try {
       const supabase = createClient();
 
-      // 1. 회원가입 시도
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: { data: { nickname } },
-      });
-
-      console.log("[signup] signUp", {
-        hasSession: Boolean(data?.session),
-        userId: data?.user?.id ?? null,
-        email: data?.user?.email ?? email,
-        error: signUpError?.message ?? null,
       });
 
       if (signUpError?.message?.includes("already registered")) {
@@ -65,11 +57,9 @@ export default function SignupPage() {
         return;
       }
 
-      // 2. 세션이 바로 왔으면 성공
+      // 세션이 바로 왔으면 성공
       if (data?.session) {
-        console.log("[signup] refreshSession:before");
         await refreshSession();
-        console.log("[signup] refreshSession:after");
         router.replace(ROUTES.HOME);
         router.refresh();
         return;
@@ -80,31 +70,20 @@ export default function SignupPage() {
         return;
       }
 
-      // 3. 유저는 생성됐지만 세션이 없는 경우 자동 로그인 시도
-      //    → 바로 로그인 시도
+      // 유저는 생성됐지만 세션이 없는 경우 자동 로그인 시도
       const { data: loginData, error: loginError } =
         await supabase.auth.signInWithPassword({ email, password });
 
-      console.log("[signup] autoSignIn", {
-        hasSession: Boolean(loginData?.session),
-        userId: loginData?.user?.id ?? null,
-        email: loginData?.user?.email ?? email,
-        error: loginError?.message ?? null,
-      });
-
       if (loginData?.session) {
-        console.log("[signup] autoSignIn refreshSession:before");
         await refreshSession();
-        console.log("[signup] autoSignIn refreshSession:after");
         router.replace(ROUTES.HOME);
         router.refresh();
         return;
       }
 
-      // 4. 로그인도 실패
       if (loginError) {
         setError(
-          "가입은 완료됐지만 자동 로그인에 실패했습니다. Supabase에서 이메일 인증이 켜져 있다면 메일 인증 후 로그인해주세요."
+          "가입은 완료됐지만 자동 로그인에 실패했습니다. 로그인 페이지에서 다시 시도해주세요."
         );
       }
     } catch {

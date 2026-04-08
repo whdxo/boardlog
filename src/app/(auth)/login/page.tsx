@@ -29,13 +29,6 @@ export default function LoginPage() {
         password,
       });
 
-      console.log("[login] signInWithPassword", {
-        hasSession: Boolean(data?.session),
-        userId: data?.user?.id ?? null,
-        email: data?.user?.email ?? email,
-        error: signInError?.message ?? null,
-      });
-
       if (signInError) {
         setError(
           signInError.message === "Invalid login credentials"
@@ -48,9 +41,7 @@ export default function LoginPage() {
       }
 
       if (data?.session) {
-        console.log("[login] refreshSession:before");
         await refreshSession();
-        console.log("[login] refreshSession:after");
         router.replace(ROUTES.HOME);
         router.refresh();
       } else {
