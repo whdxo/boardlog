@@ -9,7 +9,7 @@ import BannerSlide from "@/components/game/BannerSlide";
 import GameGrid from "@/components/game/GameGrid";
 import LoginPrompt from "@/components/common/LoginPrompt";
 import { ROUTES } from "@/constants";
-import { createClient } from "@/lib/supabase/server";
+import { useAuthStore } from "@/stores/authStore";
 import type { BannerItem } from "@/components/game/BannerSlide";
 import type { Game } from "@/types";
 
@@ -111,13 +111,8 @@ const MOCK_RECOMMENDED: Game[] = [
   },
 ];
 
-export default async function HomePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const isLoggedIn = Boolean(user);
+export default function HomePage() {
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
 
   return (
     <div className="min-h-screen flex flex-col">
