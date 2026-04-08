@@ -11,7 +11,7 @@ import EmptyState from "@/components/common/EmptyState";
 import LoginPrompt from "@/components/common/LoginPrompt";
 import { buttonVariants } from "@/lib/button-variants";
 import { cn } from "@/lib/utils";
-import { ROUTES, COLLECTION_STATUSES, COLLECTION_STATUS_LABEL } from "@/constants";
+import { ROUTES, COLLECTION_STATUSES } from "@/constants";
 import { useAuthStore } from "@/stores/authStore";
 import type { PlayLog, Collection, Rating, CollectionStatus, Selection } from "@/types";
 
@@ -90,9 +90,9 @@ function groupByMonth(logs: PlayLog[]) {
 
 export default function MyPage() {
   const { isLoggedIn, isLoading } = useAuthStore();
+  const [collectionFilter, setCollectionFilter] = useState<CollectionStatus | "all">("all");
 
   if (isLoading) return null;
-  const [collectionFilter, setCollectionFilter] = useState<CollectionStatus | "all">("all");
 
   if (!isLoggedIn) {
     return (
