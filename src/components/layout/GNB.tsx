@@ -28,7 +28,8 @@ const NAV_LINKS = [
 export default function GNB() {
   const pathname = usePathname();
   const router = useRouter();
-  const { profile, isLoggedIn, signOut } = useAuthStore();
+  const { user, profile, isLoggedIn, signOut } = useAuthStore();
+  const displayName = profile?.nickname ?? user?.email?.split("@")[0] ?? "내 계정";
 
   const handleSignOut = async () => {
     await signOut();
@@ -73,7 +74,7 @@ export default function GNB() {
 
         {/* 우측 액션 */}
         <div className="ml-auto flex items-center gap-3">
-          {isLoggedIn && profile ? (
+          {isLoggedIn && user ? (
             <>
               {/* 알림 */}
               <Link
@@ -86,10 +87,10 @@ export default function GNB() {
               {/* 프로필 드롭다운 */}
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
-                  {profile.profile_image ? (
+                  {profile?.profile_image ? (
                     <img
                       src={profile.profile_image}
-                      alt={profile.nickname}
+                      alt={displayName}
                       className="w-8 h-8 rounded-full object-cover"
                     />
                   ) : (
@@ -97,7 +98,7 @@ export default function GNB() {
                       <User size={16} className="text-primary-600" />
                     </span>
                   )}
-                  {profile.nickname}
+                  {displayName}
                   <ChevronDown size={14} className="text-gray-400" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">

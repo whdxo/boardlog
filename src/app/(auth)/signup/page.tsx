@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ROUTES } from "@/constants";
 import { createClient } from "@/lib/supabase/client";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function SignupPage() {
+  const router = useRouter();
+  const refreshSession = useAuthStore((state) => state.refreshSession);
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,38 +41,50 @@ export default function SignupPage() {
     try {
       const supabase = createClient();
 
-      // 1. 회원가입 시도
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: { data: { nickname } },
       });
 
-      // 2. 세션이 바로 왔으면 성공
-      if (data?.session) {
-        window.location.href = "/";
-        return;
-      }
-
-      // 3. signUp 에러가 "already registered"이면 안내
       if (signUpError?.message?.includes("already registered")) {
         setError("이미 가입된 이메일입니다.");
         return;
       }
 
-      // 4. 유저는 생성됐지만 세션이 없는 경우 (트리거 에러 포함)
-      //    → 바로 로그인 시도
+      if (signUpError) {
+        setError(signUpError.message);
+        return;
+      }
+
+      // 세션이 바로 왔으면 성공
+      if (data?.session) {
+        await refreshSession();
+        router.replace(ROUTES.HOME);
+        router.refresh();
+        return;
+      }
+
+      if (!data?.user) {
+        setError("회원가입에 실패했습니다. 다시 시도해주세요.");
+        return;
+      }
+
+      // 유저는 생성됐지만 세션이 없는 경우 자동 로그인 시도
       const { data: loginData, error: loginError } =
         await supabase.auth.signInWithPassword({ email, password });
 
       if (loginData?.session) {
-        window.location.href = "/";
+        await refreshSession();
+        router.replace(ROUTES.HOME);
+        router.refresh();
         return;
       }
 
-      // 5. 로그인도 실패
       if (loginError) {
-        setError("가입은 완료되었지만 자동 로그인에 실패했습니다. 로그인 페이지에서 시도해주세요.");
+        setError(
+          "가입은 완료됐지만 자동 로그인에 실패했습니다. 로그인 페이지에서 다시 시도해주세요."
+        );
       }
     } catch {
       setError("회원가입 중 오류가 발생했습니다.");

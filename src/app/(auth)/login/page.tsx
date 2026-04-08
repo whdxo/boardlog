@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ROUTES } from "@/constants";
 import { createClient } from "@/lib/supabase/client";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const refreshSession = useAuthStore((state) => state.refreshSession);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -37,7 +41,9 @@ export default function LoginPage() {
       }
 
       if (data?.session) {
-        window.location.href = "/";
+        await refreshSession();
+        router.replace(ROUTES.HOME);
+        router.refresh();
       } else {
         setError("로그인에 실패했습니다. 다시 시도해주세요.");
       }
