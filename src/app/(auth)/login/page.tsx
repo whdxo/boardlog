@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ROUTES } from "@/constants";
 import { createClient } from "@/lib/supabase/client";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const refreshSession = useAuthStore((state) => state.refreshSession);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -25,6 +29,13 @@ export default function LoginPage() {
         password,
       });
 
+      console.log("[login] signInWithPassword", {
+        hasSession: Boolean(data?.session),
+        userId: data?.user?.id ?? null,
+        email: data?.user?.email ?? email,
+        error: signInError?.message ?? null,
+      });
+
       if (signInError) {
         setError(
           signInError.message === "Invalid login credentials"
@@ -37,7 +48,11 @@ export default function LoginPage() {
       }
 
       if (data?.session) {
-        window.location.href = "/";
+        console.log("[login] refreshSession:before");
+        await refreshSession();
+        console.log("[login] refreshSession:after");
+        router.replace(ROUTES.HOME);
+        router.refresh();
       } else {
         setError("로그인에 실패했습니다. 다시 시도해주세요.");
       }

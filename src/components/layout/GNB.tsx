@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, ChevronDown, User } from "lucide-react";
 import { buttonVariants } from "@/lib/button-variants";
@@ -28,7 +29,19 @@ const NAV_LINKS = [
 export default function GNB() {
   const pathname = usePathname();
   const router = useRouter();
-  const { profile, isLoggedIn, signOut } = useAuthStore();
+  const { user, profile, isLoggedIn, isLoading, signOut } = useAuthStore();
+  const displayName = profile?.nickname ?? user?.email?.split("@")[0] ?? "내 계정";
+
+  useEffect(() => {
+    console.log("[GNB] auth state", {
+      pathname,
+      isLoading,
+      isLoggedIn,
+      userId: user?.id ?? null,
+      profileId: profile?.id ?? null,
+      displayName,
+    });
+  }, [displayName, isLoading, isLoggedIn, pathname, profile?.id, user?.id]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -73,7 +86,7 @@ export default function GNB() {
 
         {/* 우측 액션 */}
         <div className="ml-auto flex items-center gap-3">
-          {isLoggedIn && profile ? (
+          {isLoading ? null : isLoggedIn && user ? (
             <>
               {/* 알림 */}
               <Link
@@ -86,10 +99,10 @@ export default function GNB() {
               {/* 프로필 드롭다운 */}
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
-                  {profile.profile_image ? (
+                  {profile?.profile_image ? (
                     <img
                       src={profile.profile_image}
-                      alt={profile.nickname}
+                      alt={displayName}
                       className="w-8 h-8 rounded-full object-cover"
                     />
                   ) : (
@@ -97,7 +110,7 @@ export default function GNB() {
                       <User size={16} className="text-primary-600" />
                     </span>
                   )}
-                  {profile.nickname}
+                  {displayName}
                   <ChevronDown size={14} className="text-gray-400" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
