@@ -3,7 +3,8 @@ import { ArrowLeft, Share2, Star, MapPin, Phone, Clock } from "lucide-react";
 import { ROUTES } from "@/constants";
 
 export default async function LocalDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: _id } = await params;
+  const { id } = await params;
+  void id;
 
   const place = {
     name: "플레이보드", type: "카페", address: "서울 마포구 어울마당로 130",

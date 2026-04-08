@@ -3,7 +3,8 @@ import { ArrowLeft, MoreHorizontal } from "lucide-react";
 import { ROUTES } from "@/constants";
 
 export default async function SelectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: _id } = await params;
+  const { id } = await params;
+  void id;
 
   const sel = {
     title: "협력 게임 명작 모음",

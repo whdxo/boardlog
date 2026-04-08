@@ -4,7 +4,8 @@ import { ArrowLeft, Share2, Heart, Bell, ExternalLink } from "lucide-react";
 import { ROUTES } from "@/constants";
 
 export default async function ShopDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: _id } = await params;
+  const { id } = await params;
+  void id;
 
   const product = {
     title: "카르디아",

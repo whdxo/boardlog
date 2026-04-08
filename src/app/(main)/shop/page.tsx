@@ -22,11 +22,16 @@ export default function ShopPage() {
 
   const filtered = MOCK_PRODUCTS.filter((p) => category === "all" || p.category === category);
 
-  const toggle = (id: string) => setWishlisted((prev) => {
-    const next = new Set(prev);
-    next.has(id) ? next.delete(id) : next.add(id);
-    return next;
-  });
+  const toggle = (id: string) =>
+    setWishlisted((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
 
   return (
     <div className="min-h-screen bg-gray-50">

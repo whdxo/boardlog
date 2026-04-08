@@ -26,7 +26,8 @@ function timeAgo(iso: string) {
 }
 
 export default function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: _id } = use(params);
+  const { id } = use(params);
+  void id;
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(32);
 

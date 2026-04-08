@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 import { USED_TYPE_OPTIONS, ITEM_CONDITION_OPTIONS, TRADE_METHOD_OPTIONS } from "@/constants";
 
 export default function UsedDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: _id } = use(params);
+  const { id } = use(params);
+  void id;
 
   const post = {
     type: "sell" as const, status: "active" as const,
