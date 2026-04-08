@@ -37,40 +37,38 @@ export default function SignupPage() {
     try {
       const supabase = createClient();
 
+      // 1. 회원가입 시도
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: { data: { nickname } },
       });
 
-      if (signUpError) {
-        setError(
-          signUpError.message.includes("already registered")
-            ? "이미 가입된 이메일입니다."
-            : signUpError.message
-        );
+      // 2. 세션이 바로 왔으면 성공
+      if (data?.session) {
+        window.location.href = "/";
         return;
       }
 
-      // 가입 성공 — 세션 여부에 관계없이 로그인 시도
-      if (data?.user) {
-        // 세션이 있으면 바로 이동
-        if (data.session) {
-          window.location.href = "/";
-          return;
-        }
+      // 3. signUp 에러가 "already registered"이면 안내
+      if (signUpError?.message?.includes("already registered")) {
+        setError("이미 가입된 이메일입니다.");
+        return;
+      }
 
-        // 세션 없으면 로그인 시도 (Confirm email OFF인 경우)
-        const { data: loginData, error: loginError } =
-          await supabase.auth.signInWithPassword({ email, password });
+      // 4. 유저는 생성됐지만 세션이 없는 경우 (트리거 에러 포함)
+      //    → 바로 로그인 시도
+      const { data: loginData, error: loginError } =
+        await supabase.auth.signInWithPassword({ email, password });
 
-        if (!loginError && loginData?.session) {
-          window.location.href = "/";
-          return;
-        }
+      if (loginData?.session) {
+        window.location.href = "/";
+        return;
+      }
 
-        // 로그인도 안 되면 안내
-        setError("가입이 완료되었습니다. 로그인 페이지에서 로그인해주세요.");
+      // 5. 로그인도 실패
+      if (loginError) {
+        setError("가입은 완료되었지만 자동 로그인에 실패했습니다. 로그인 페이지에서 시도해주세요.");
       }
     } catch {
       setError("회원가입 중 오류가 발생했습니다.");
