@@ -58,16 +58,12 @@ export default function GameSearchSheet({
     return () => clearTimeout(timer);
   }, [query, doSearch]);
 
-  // Reset on open
-  useEffect(() => {
-    if (open) {
-      setQuery("");
-      setResults([]);
-    }
-  }, [open]);
-
   return (
-    <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
+    <Sheet
+      key={open ? "open" : "closed"}
+      open={open}
+      onOpenChange={(v) => !v && onClose()}
+    >
       <SheetContent side="bottom" className="rounded-t-2xl px-4 pb-8 h-[80vh] flex flex-col">
         <SheetHeader>
           <SheetTitle>게임 검색</SheetTitle>

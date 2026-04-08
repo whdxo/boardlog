@@ -7,13 +7,10 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // TODO: 실제 인증 연동 후 user 상태 주입
-  const user = null;
-
   return (
     <div className="min-h-screen flex flex-col">
       {/* 데스크톱 GNB */}
-      <GNB user={user} />
+      <GNB />
 
       {/* 콘텐츠 */}
       <main className="flex-1 pb-14 md:pb-0">{children}</main>

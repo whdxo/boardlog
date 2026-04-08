@@ -13,21 +13,28 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ROUTES } from "@/constants";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/authStore";
 
 const NAV_LINKS = [
-  { label: "홈", href: ROUTES.HOME },
-  { label: "탐색", href: ROUTES.GAMES },
-  { label: "내기록", href: ROUTES.MY },
+  { label: "홈",      href: ROUTES.HOME },
+  { label: "탐색",    href: ROUTES.GAMES },
+  { label: "커뮤니티", href: ROUTES.COMMUNITY },
+  { label: "로컬",    href: ROUTES.LOCAL },
+  { label: "쇼핑",    href: ROUTES.SHOP },
+  { label: "중고",    href: ROUTES.USED },
+  { label: "내게임",  href: ROUTES.MY },
 ];
 
-interface GNBProps {
-  /** 로그인한 유저 정보. undefined면 비로그인 상태로 렌더 */
-  user?: { nickname: string; profileImage?: string } | null;
-}
-
-export default function GNB({ user }: GNBProps) {
+export default function GNB() {
   const pathname = usePathname();
   const router = useRouter();
+  const { profile, isLoggedIn, signOut } = useAuthStore();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/");
+    router.refresh();
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
@@ -66,7 +73,7 @@ export default function GNB({ user }: GNBProps) {
 
         {/* 우측 액션 */}
         <div className="ml-auto flex items-center gap-3">
-          {user ? (
+          {isLoggedIn && profile ? (
             <>
               {/* 알림 */}
               <Link
@@ -79,10 +86,10 @@ export default function GNB({ user }: GNBProps) {
               {/* 프로필 드롭다운 */}
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
-                  {user.profileImage ? (
+                  {profile.profile_image ? (
                     <img
-                      src={user.profileImage}
-                      alt={user.nickname}
+                      src={profile.profile_image}
+                      alt={profile.nickname}
                       className="w-8 h-8 rounded-full object-cover"
                     />
                   ) : (
@@ -90,7 +97,7 @@ export default function GNB({ user }: GNBProps) {
                       <User size={16} className="text-primary-600" />
                     </span>
                   )}
-                  {user.nickname}
+                  {profile.nickname}
                   <ChevronDown size={14} className="text-gray-400" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
@@ -101,7 +108,7 @@ export default function GNB({ user }: GNBProps) {
                     설정
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-error">
+                  <DropdownMenuItem className="text-error" onClick={handleSignOut}>
                     로그아웃
                   </DropdownMenuItem>
                 </DropdownMenuContent>

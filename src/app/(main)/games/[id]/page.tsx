@@ -9,8 +9,9 @@ import StarRating from "@/components/common/StarRating";
 import PurchaseBar from "@/components/game/PurchaseBar";
 import PurchaseSideCard from "@/components/game/PurchaseSideCard";
 import RatingModal from "@/components/game/RatingModal";
-import CollectionSheet from "@/components/game/CollectionSheet";
+import { CollectionSheet } from "@/components/game/CollectionSheet";
 import { Badge } from "@/components/ui/badge";
+import { COLLECTION_STATUS_LABEL } from "@/constants";
 import type { Game, CollectionStatus } from "@/types";
 
 // Mock game data
@@ -30,7 +31,7 @@ export default function GameDetailPage({ params }: GameDetailPageProps) {
   const [ratingOpen, setRatingOpen] = useState(false);
   const [collectionOpen, setCollectionOpen] = useState(false);
   const [myRating, setMyRating] = useState<number | undefined>();
-  const [collectionStatus, setCollectionStatus] = useState<CollectionStatus | undefined>();
+  const [collectionStatus, setCollectionStatus] = useState<CollectionStatus | null>(null);
 
   if (!game) notFound();
 
@@ -91,9 +92,9 @@ export default function GameDetailPage({ params }: GameDetailPageProps) {
                     onClick={() => setCollectionOpen(true)}
                   >
                     {collectionStatus
-                      ? { owned: "보유중", wishlist: "위시리스트", completed: "플레이완료" }[collectionStatus]
+                      ? COLLECTION_STATUS_LABEL[collectionStatus]
                       : "+ 컬렉션"}
-                  </button>
+</button>
                   <button
                     type="button"
                     className="flex-1 h-9 rounded-xl border border-gray-200 text-caption font-medium text-accent-400 hover:border-accent-400 transition-colors"
@@ -132,7 +133,7 @@ export default function GameDetailPage({ params }: GameDetailPageProps) {
           <PurchaseSideCard
             price={game.price ?? 0}
             purchaseUrl={game.purchaseUrl}
-            collectionStatus={collectionStatus}
+            collectionStatus={collectionStatus ?? undefined}
             onCollectionClick={() => setCollectionOpen(true)}
             onRatingClick={() => setRatingOpen(true)}
             myRating={myRating}
@@ -163,8 +164,8 @@ export default function GameDetailPage({ params }: GameDetailPageProps) {
       <CollectionSheet
         open={collectionOpen}
         onClose={() => setCollectionOpen(false)}
-        current={collectionStatus}
-        onSave={setCollectionStatus}
+        currentStatus={collectionStatus}
+        onSelect={setCollectionStatus}
       />
     </>
   );

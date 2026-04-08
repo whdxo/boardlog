@@ -9,6 +9,7 @@ import BannerSlide from "@/components/game/BannerSlide";
 import GameGrid from "@/components/game/GameGrid";
 import LoginPrompt from "@/components/common/LoginPrompt";
 import { ROUTES } from "@/constants";
+import { useAuthStore } from "@/stores/authStore";
 import type { BannerItem } from "@/components/game/BannerSlide";
 import type { Game } from "@/types";
 
@@ -110,13 +111,12 @@ const MOCK_RECOMMENDED: Game[] = [
   },
 ];
 
-// TODO: 실제 인증 연동 후 user 상태 주입
-const user = null;
-
 export default function HomePage() {
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+
   return (
     <div className="min-h-screen flex flex-col">
-      <GNB user={user} />
+      <GNB />
 
       <main className="flex-1 pb-14 md:pb-0">
         <div className="max-w-[1080px] mx-auto px-4 md:px-6 py-6 flex flex-col gap-10">
@@ -146,7 +146,7 @@ export default function HomePage() {
 
           {/* 최근 기록 / 로그인 유도 */}
           <section>
-            {user ? (
+            {isLoggedIn ? (
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-h1 font-bold text-gray-900">최근 기록</h2>

@@ -1,82 +1,91 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
 import type { CollectionStatus } from "@/types";
-
-const OPTIONS: { value: CollectionStatus; label: string }[] = [
-  { value: "owned", label: "보유중" },
-  { value: "wishlist", label: "위시리스트" },
-  { value: "completed", label: "플레이 완료" },
-];
+import { COLLECTION_STATUSES } from "@/constants";
 
 interface CollectionSheetProps {
   open: boolean;
   onClose: () => void;
-  current?: CollectionStatus;
-  onSave: (status: CollectionStatus) => void;
+  currentStatus?: CollectionStatus | null;
+  onSelect: (status: CollectionStatus | null) => void;
+  gameTitle?: string;
 }
 
-export default function CollectionSheet({
+export function CollectionSheet({
   open,
   onClose,
-  current,
-  onSave,
+  currentStatus,
+  onSelect,
+  gameTitle,
 }: CollectionSheetProps) {
-  const [selected, setSelected] = useState<CollectionStatus | undefined>(current);
+  const handleSelect = (status: CollectionStatus) => {
+    // 같은 항목 다시 탭 → 제거
+    onSelect(currentStatus === status ? null : status);
+    onClose();
+  };
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent side="bottom" className="rounded-t-2xl px-6 pb-8">
-        <SheetHeader>
-          <SheetTitle>컬렉션에 추가</SheetTitle>
+      <SheetContent side="bottom" className="rounded-t-2xl px-0 max-h-[90dvh] overflow-y-auto">
+        <SheetHeader className="px-5 pb-4 border-b border-gray-100">
+          <SheetTitle className="text-left text-base">
+            {gameTitle ? (
+              <>
+                <span className="text-primary-600">{gameTitle}</span>
+                <span className="text-gray-900">를 컬렉션에 추가</span>
+              </>
+            ) : (
+              "컬렉션 상태 선택"
+            )}
+          </SheetTitle>
+          <p className="text-xs text-gray-400 mt-0.5">다시 탭하면 해제돼요</p>
         </SheetHeader>
 
-        <div className="flex flex-col gap-2 mt-4">
-          {OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setSelected(opt.value)}
-              className={cn(
-                "flex items-center gap-3 p-3 rounded-xl border transition-colors text-left",
-                selected === opt.value
-                  ? "border-primary-500 bg-primary-50 text-primary-700"
-                  : "border-gray-200 hover:border-gray-300"
-              )}
-            >
-              <span
+        <div className="grid grid-cols-2 gap-3 px-5 py-4">
+          {COLLECTION_STATUSES.map((item) => {
+            const isSelected = currentStatus === item.value;
+            return (
+              <button
+                key={item.value}
+                onClick={() => handleSelect(item.value)}
                 className={cn(
-                  "w-4 h-4 rounded-full border-2 flex items-center justify-center",
-                  selected === opt.value
-                    ? "border-primary-500"
-                    : "border-gray-300"
+                  "relative flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all",
+                  isSelected
+                    ? "border-primary-500 bg-primary-50"
+                    : "border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50"
                 )}
               >
-                {selected === opt.value && (
-                  <span className="w-2 h-2 rounded-full bg-primary-500" />
+                {isSelected && (
+                  <span className="absolute top-2 right-2 w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center">
+                    <Check className="w-3 h-3 text-white" />
+                  </span>
                 )}
-              </span>
-              <span className="text-body font-medium">{opt.label}</span>
-            </button>
-          ))}
+                <span className="text-2xl leading-none">{item.emoji}</span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">{item.label}</p>
+                  <p className="text-xs text-gray-400 truncate">{item.description}</p>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
-        <Button
-          className="w-full mt-6"
-          disabled={!selected}
-          onClick={() => { if (selected) { onSave(selected); onClose(); } }}
-        >
-          저장
-        </Button>
+        {currentStatus && (
+          <div className="px-5 pb-6">
+            <button
+              onClick={() => { onSelect(null); onClose(); }}
+              className="w-full py-3 text-sm text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              컬렉션에서 제거
+            </button>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );
 }
+
+export default CollectionSheet;

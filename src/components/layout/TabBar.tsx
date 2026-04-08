@@ -2,27 +2,26 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, BookOpen, User } from "lucide-react";
+import { Home, Compass, Users, BookOpen, User } from "lucide-react";
 import { ROUTES } from "@/constants";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { label: "홈", href: ROUTES.HOME, Icon: Home, exact: true },
-  { label: "탐색", href: ROUTES.GAMES, Icon: Search },
-  { label: "내기록", href: ROUTES.MY, Icon: BookOpen },
-  { label: "프로필", href: ROUTES.PROFILE, Icon: User },
+  { label: "홈",      href: ROUTES.HOME,      Icon: Home,    exact: true },
+  { label: "탐색",    href: ROUTES.GAMES,     Icon: Compass },
+  { label: "커뮤니티", href: ROUTES.COMMUNITY, Icon: Users },
+  { label: "내게임",  href: ROUTES.MY,        Icon: BookOpen },
+  { label: "프로필",  href: ROUTES.PROFILE,   Icon: User },
 ];
 
 export default function TabBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-gray-200 safe-area-inset-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-gray-200">
       <div className="flex h-14">
         {TABS.map(({ label, href, Icon, exact }) => {
-          const isActive = exact
-            ? pathname === href
-            : pathname.startsWith(href);
+          const isActive = exact ? pathname === href : pathname.startsWith(href);
           return (
             <Link
               key={href}
@@ -33,16 +32,15 @@ export default function TabBar() {
               )}
             >
               <Icon
-                size={24}
+                size={22}
                 className={cn(isActive ? "fill-primary-100" : "")}
                 strokeWidth={isActive ? 2.5 : 1.5}
               />
-              <span className="text-[11px] font-medium">{label}</span>
+              <span className="text-[10px] font-medium">{label}</span>
             </Link>
           );
         })}
       </div>
-      {/* iOS safe area 여백 */}
       <div className="h-safe-bottom bg-white" />
     </nav>
   );
