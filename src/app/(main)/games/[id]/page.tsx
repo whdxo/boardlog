@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { use } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Users, Clock, Star, BookOpen } from "lucide-react";
 import StarRating from "@/components/common/StarRating";
 import PurchaseBar from "@/components/game/PurchaseBar";
@@ -11,14 +12,41 @@ import PurchaseSideCard from "@/components/game/PurchaseSideCard";
 import RatingModal from "@/components/game/RatingModal";
 import { CollectionSheet } from "@/components/game/CollectionSheet";
 import { Badge } from "@/components/ui/badge";
+import { createClient } from "@/lib/supabase/client";
 import { COLLECTION_STATUS_LABEL } from "@/constants";
 import type { Game, CollectionStatus } from "@/types";
 
-// Mock game data
-const MOCK_GAMES: Record<string, Game> = {
-  "1": { id: "1", title: "카탄", titleEn: "Catan", minPlayers: 3, maxPlayers: 4, minPlayTime: 60, maxPlayTime: 120, minAge: 10, genres: ["전략", "경제"], thumbnail: "https://images.unsplash.com/photo-1611996575749-79a3a250f948?w=800", avgRating: 4.5, ratingCount: 1243, price: 45000, description: "카탄은 섬 카탄을 배경으로 한 전략 보드게임입니다. 플레이어들은 자원을 수집하고 교역하며 섬을 개척해 나갑니다. 최대 4명이 함께 즐길 수 있으며 협상과 전략이 핵심입니다." },
-  "2": { id: "2", title: "팬데믹", titleEn: "Pandemic", minPlayers: 2, maxPlayers: 4, minPlayTime: 45, maxPlayTime: 75, minAge: 8, genres: ["협력", "전략"], thumbnail: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800", avgRating: 4.3, ratingCount: 987, price: 42000, description: "팬데믹은 전세계를 위협하는 전염병을 막기 위해 플레이어들이 협력하는 협동 보드게임입니다." },
-};
+async function fetchGame(id: string): Promise<Game | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("games")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !data) return null;
+
+  return {
+    id: data.id,
+    title: data.title,
+    titleEn: data.title_en ?? undefined,
+    thumbnail: data.thumbnail ?? "",
+    description: data.description ?? undefined,
+    designer: data.designer ?? undefined,
+    publisher: data.publisher ?? undefined,
+    releaseYear: data.release_year ?? undefined,
+    minPlayers: data.min_players,
+    maxPlayers: data.max_players,
+    minPlayTime: data.min_play_time ?? undefined,
+    maxPlayTime: data.max_play_time ?? undefined,
+    minAge: data.min_age ?? undefined,
+    genres: data.genres ?? [],
+    avgRating: data.avg_rating ? Number(data.avg_rating) : undefined,
+    ratingCount: data.rating_count ?? undefined,
+    price: data.price ?? undefined,
+    bggId: data.bgg_id ?? undefined,
+  };
+}
 
 interface GameDetailPageProps {
   params: Promise<{ id: string }>;
@@ -26,12 +54,24 @@ interface GameDetailPageProps {
 
 export default function GameDetailPage({ params }: GameDetailPageProps) {
   const { id } = use(params);
-  const game = MOCK_GAMES[id];
+
+  const { data: game, isLoading } = useQuery({
+    queryKey: ["game", id],
+    queryFn: () => fetchGame(id),
+  });
 
   const [ratingOpen, setRatingOpen] = useState(false);
   const [collectionOpen, setCollectionOpen] = useState(false);
   const [myRating, setMyRating] = useState<number | undefined>();
   const [collectionStatus, setCollectionStatus] = useState<CollectionStatus | null>(null);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!game) notFound();
 
@@ -94,7 +134,7 @@ export default function GameDetailPage({ params }: GameDetailPageProps) {
                     {collectionStatus
                       ? COLLECTION_STATUS_LABEL[collectionStatus]
                       : "+ 컬렉션"}
-</button>
+                  </button>
                   <button
                     type="button"
                     className="flex-1 h-9 rounded-xl border border-gray-200 text-caption font-medium text-accent-400 hover:border-accent-400 transition-colors"

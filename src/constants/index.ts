@@ -33,6 +33,9 @@ export const ROUTES = {
   MY_LOGS_WRITE: "/my/logs/write",
   MY_LOG_DETAIL: (id: string) => `/my/logs/${id}`,
   MY_LOG_EDIT: (id: string) => `/my/logs/${id}/edit`,
+  MY_GAME_DETAIL: (id: string) => `/my/games/${id}`,
+  USER_PROFILE: (nickname: string) => `/u/${nickname}`,
+  USER_GAME_DETAIL: (nickname: string, id: string) => `/u/${nickname}/games/${id}`,
   // 계정
   PROFILE: "/profile",
   PROFILE_EDIT: "/profile/edit",
