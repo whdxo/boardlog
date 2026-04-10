@@ -1,6 +1,20 @@
+"use client";
+
 import MobileHeader from "@/components/layout/MobileHeader";
+import LoginPrompt from "@/components/common/LoginPrompt";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function AccountSettingsPage() {
+  const { isLoggedIn, isLoading } = useAuthStore();
+  if (isLoading) return null;
+  if (!isLoggedIn) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <LoginPrompt />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-lg mx-auto">
       <MobileHeader variant="back" title="계정 정보" />

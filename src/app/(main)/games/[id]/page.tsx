@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { notFound } from "next/navigation";
+import { notFound, usePathname } from "next/navigation";
 import { use } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Users, Clock, Star, BookOpen } from "lucide-react";
@@ -11,8 +11,10 @@ import PurchaseBar from "@/components/game/PurchaseBar";
 import PurchaseSideCard from "@/components/game/PurchaseSideCard";
 import RatingModal from "@/components/game/RatingModal";
 import { CollectionSheet } from "@/components/game/CollectionSheet";
+import { LoginPromptSheet } from "@/components/layout/LoginPromptSheet";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
+import { useAuthStore } from "@/stores/authStore";
 import { COLLECTION_STATUS_LABEL } from "@/constants";
 import type { Game, CollectionStatus } from "@/types";
 
@@ -64,6 +66,18 @@ export default function GameDetailPage({ params }: GameDetailPageProps) {
   const [collectionOpen, setCollectionOpen] = useState(false);
   const [myRating, setMyRating] = useState<number | undefined>();
   const [collectionStatus, setCollectionStatus] = useState<CollectionStatus | null>(null);
+  const [loginSheetOpen, setLoginSheetOpen] = useState(false);
+  const { isLoggedIn } = useAuthStore();
+  const pathname = usePathname();
+
+  const handleCollectionClick = () => {
+    if (!isLoggedIn) { setLoginSheetOpen(true); return; }
+    setCollectionOpen(true);
+  };
+  const handleRatingClick = () => {
+    if (!isLoggedIn) { setLoginSheetOpen(true); return; }
+    setRatingOpen(true);
+  };
 
   if (isLoading) {
     return (
@@ -129,7 +143,7 @@ export default function GameDetailPage({ params }: GameDetailPageProps) {
                   <button
                     type="button"
                     className="flex-1 h-9 rounded-xl border border-gray-200 text-caption font-medium text-gray-700 hover:border-primary-500 hover:text-primary-600 transition-colors"
-                    onClick={() => setCollectionOpen(true)}
+                    onClick={handleCollectionClick}
                   >
                     {collectionStatus
                       ? COLLECTION_STATUS_LABEL[collectionStatus]
@@ -138,7 +152,7 @@ export default function GameDetailPage({ params }: GameDetailPageProps) {
                   <button
                     type="button"
                     className="flex-1 h-9 rounded-xl border border-gray-200 text-caption font-medium text-accent-400 hover:border-accent-400 transition-colors"
-                    onClick={() => setRatingOpen(true)}
+                    onClick={handleRatingClick}
                   >
                     {myRating ? `★ ${myRating}점` : "★ 평점"}
                   </button>
@@ -174,7 +188,7 @@ export default function GameDetailPage({ params }: GameDetailPageProps) {
             price={game.price ?? 0}
             purchaseUrl={game.purchaseUrl}
             collectionStatus={collectionStatus ?? undefined}
-            onCollectionClick={() => setCollectionOpen(true)}
+            onCollectionClick={handleCollectionClick}
             onRatingClick={() => setRatingOpen(true)}
             myRating={myRating}
           />
@@ -199,6 +213,9 @@ export default function GameDetailPage({ params }: GameDetailPageProps) {
         onSave={setMyRating}
         onDelete={myRating ? () => setMyRating(undefined) : undefined}
       />
+
+      {/* 로그인 유도 시트 */}
+      <LoginPromptSheet open={loginSheetOpen} onClose={() => setLoginSheetOpen(false)} callbackUrl={pathname} />
 
       {/* 컬렉션 시트 */}
       <CollectionSheet
