@@ -2,9 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parse } from "csv-parse/sync";
 import { PrismaPg } from "@prisma/adapter-pg";
-import prismaClient from "@prisma/client";
-
-const { PrismaClient } = prismaClient;
+import { PrismaClient } from "@prisma/client";
 const CSV_CANDIDATES = [
   resolve(process.cwd(), "data/boardgames_ranks.csv"),
   resolve(process.cwd(), "data/bgg_ranks.csv"),
