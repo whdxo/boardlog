@@ -11,7 +11,6 @@ import PlayerStatsTable from "@/components/my/PlayerStatsTable";
 import PlayerCountRatings from "@/components/my/PlayerCountRatings";
 import LocationStats from "@/components/my/LocationStats";
 import GamePlayLogList from "@/components/my/GamePlayLogList";
-import EmptyState from "@/components/common/EmptyState";
 import { getProfileByNickname } from "@/lib/api/publicProfile";
 import { getGameStats, getGamePlayLogs } from "@/lib/api/gameStats";
 import { ROUTES } from "@/constants";

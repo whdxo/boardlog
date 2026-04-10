@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["public", "auth"]
+}
+
+model Game {
+  id           String    @id @default(uuid()) @db.Uuid
+  bggId        String?   @unique @map("bgg_id")
+  title        String
+  titleKr      String?   @map("title_kr")
+  titleEn      String?   @map("title_en")
+  description  String?   @db.Text
+  minPlayers   Int       @default(1) @map("min_players")
+  maxPlayers   Int       @default(4) @map("max_players")
+  minPlayTime  Int?      @map("min_play_time")
+  maxPlayTime  Int?      @map("max_play_time")
+  minAge       Int?      @map("min_age")
+  genres       String[]
+  designer     String?
+  publisher    String?
+  releaseYear  Int?      @map("release_year")
+  thumbnail    String?
+  imageUrl     String?   @map("image_url")
+  price        Int?
+  avgRating    Decimal?  @map("avg_rating") @db.Decimal(3, 1)
+  ratingCount  Int?      @map("rating_count")
+  rank         Int?
+  rankChange   Int?      @map("rank_change")
+  weight       Decimal?  @db.Decimal(3, 2)
+  isNew        Boolean   @default(false) @map("is_new")
+  isExpansion  Boolean   @default(false) @map("is_expansion")
+  lastSyncedAt DateTime? @map("last_synced_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  tags GameTag[]
+
+  @@index([title], map: "idx_games_title")
+  @@index([titleKr], map: "idx_games_title_kr")
+  @@index([rank], map: "idx_games_rank")
+  @@index([avgRating], map: "idx_games_avg_rating")
+  @@index([ratingCount], map: "idx_games_rating_count")
+  @@index([releaseYear], map: "idx_games_release_year")
+  @@map("games")
+  @@schema("public")
+}
+
+model Tag {
+  id         String    @id @default(uuid()) @db.Uuid
+  name       String    @unique
+  nameKr     String?   @map("name_kr")
+  type       String
+
+  games GameTag[]
+
+  @@index([type], map: "idx_tags_type")
+  @@map("tags")
+  @@schema("public")
+}
+
+model GameTag {
+  gameId String @map("game_id") @db.Uuid
+  tagId  String @map("tag_id") @db.Uuid
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([gameId, tagId])
+  @@index([tagId], map: "idx_game_tags_tag_id")
+  @@map("game_tags")
+  @@schema("public")
+}

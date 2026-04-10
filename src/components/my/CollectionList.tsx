@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Star, Users } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants";
 import type { CollectionGameRow } from "@/lib/api/collection";
 
