@@ -2,9 +2,12 @@
 
 import { useState, use } from "react";
 import { ArrowLeft, ThumbsUp, Share2, MoreHorizontal } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { CommentInput } from "@/components/community/CommentInput";
+import { LoginPromptSheet } from "@/components/layout/LoginPromptSheet";
 import { cn } from "@/lib/utils";
 import { POST_CATEGORIES } from "@/constants";
+import { useAuthStore } from "@/stores/authStore";
 import type { Comment } from "@/types";
 
 const MOCK_COMMENTS: Comment[] = [
@@ -30,10 +33,14 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
   void id;
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(32);
+  const [loginSheetOpen, setLoginSheetOpen] = useState(false);
+  const { isLoggedIn } = useAuthStore();
+  const pathname = usePathname();
 
   const cat = POST_CATEGORIES.find((c) => c.value === "review");
 
   const handleLike = () => {
+    if (!isLoggedIn) { setLoginSheetOpen(true); return; }
     setLiked((p) => !p);
     setLikeCount((p) => liked ? p - 1 : p + 1);
   };
@@ -132,7 +139,11 @@ export default function PostDetailPage({ params }: { params: Promise<{ id: strin
         </div>
       </article>
 
-      <CommentInput onSubmit={(text) => console.log("댓글:", text)} />
+      <CommentInput onSubmit={(text) => {
+        if (!isLoggedIn) { setLoginSheetOpen(true); return; }
+        console.log("댓글:", text);
+      }} />
+      <LoginPromptSheet open={loginSheetOpen} onClose={() => setLoginSheetOpen(false)} callbackUrl={pathname} />
     </div>
   );
 }

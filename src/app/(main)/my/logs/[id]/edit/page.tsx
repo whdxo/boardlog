@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { use } from "react";
 import MobileHeader from "@/components/layout/MobileHeader";
 import LogForm from "@/components/log/LogForm";
+import LoginPrompt from "@/components/common/LoginPrompt";
+import { useAuthStore } from "@/stores/authStore";
 import type { PlayLog, PlayLogFormData } from "@/types";
 
 // Mock data — same as detail page
@@ -29,6 +31,17 @@ interface LogEditPageProps {
 
 export default function LogEditPage({ params }: LogEditPageProps) {
   const { id } = use(params);
+  const { isLoggedIn, isLoading } = useAuthStore();
+
+  if (isLoading) return null;
+  if (!isLoggedIn) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <LoginPrompt title="로그인이 필요해요" description="기록을 수정하려면 로그인해주세요" />
+      </div>
+    );
+  }
+
   const log = MOCK_LOGS[id];
 
   if (!log) notFound();

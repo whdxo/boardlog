@@ -1,10 +1,15 @@
+"use client";
+
+import { use } from "react";
 import Link from "next/link";
 import { ArrowLeft, MoreHorizontal } from "lucide-react";
 import { ROUTES } from "@/constants";
+import { useAuthStore } from "@/stores/authStore";
 
-export default async function SelectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default function SelectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   void id;
+  const { isLoggedIn } = useAuthStore();
 
   const sel = {
     title: "협력 게임 명작 모음",
@@ -24,9 +29,11 @@ export default async function SelectionDetailPage({ params }: { params: Promise<
         <Link href={ROUTES.MY_SELECTIONS} className="p-1">
           <ArrowLeft className="w-5 h-5 text-gray-700" />
         </Link>
-        <button className="p-1">
-          <MoreHorizontal className="w-5 h-5 text-gray-500" />
-        </button>
+        {isLoggedIn && (
+          <button className="p-1">
+            <MoreHorizontal className="w-5 h-5 text-gray-500" />
+          </button>
+        )}
       </div>
 
       <div className="px-4 pt-6 pb-8">

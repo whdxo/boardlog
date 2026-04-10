@@ -6,32 +6,18 @@ import Image from "next/image";
 import { Plus, Settings, BarChart2, Grid3X3, BookOpen, Star, List } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LogCard from "@/components/log/LogCard";
-import GameCard from "@/components/game/GameCard";
 import EmptyState from "@/components/common/EmptyState";
 import LoginPrompt from "@/components/common/LoginPrompt";
+import CollectionCategoryBar from "@/components/my/CollectionCategoryBar";
+import CollectionList from "@/components/my/CollectionList";
 import { buttonVariants } from "@/lib/button-variants";
 import { cn } from "@/lib/utils";
-import { ROUTES, COLLECTION_STATUSES } from "@/constants";
+import { ROUTES } from "@/constants";
 import { useAuthStore } from "@/stores/authStore";
-import type { PlayLog, Collection, Rating, CollectionStatus, Selection } from "@/types";
+import { useCollectionCounts, useCollectionGames } from "@/hooks/useMyCollection";
+import type { CollectionStatus, PlayLog, Rating, Selection } from "@/types";
 
-// Mock 데이터
-const MOCK_USER = {
-  id: "u1",
-  nickname: "보드게임러버",
-  bio: "보드게임과 함께하는 일상 🎲",
-  profileImage: undefined as string | undefined,
-  followerCount: 42,
-  followingCount: 18,
-};
-
-const MOCK_STATS = {
-  gameCount: 42,
-  logCount: 8,
-  ratingCount: 128,
-  selectionCount: 5,
-};
-
+// Mock 데이터 (기록/평점/셀렉션 — 추후 Supabase 연동)
 const MOCK_LOGS: PlayLog[] = [
   {
     id: "1",
@@ -59,15 +45,8 @@ const MOCK_LOGS: PlayLog[] = [
   },
 ];
 
-const MOCK_COLLECTIONS: Collection[] = [
-  { id: "c1", userId: "u1", gameId: "1", status: "owned",     game: { id: "1", title: "카탄",    minPlayers: 3, maxPlayers: 4, thumbnail: "https://images.unsplash.com/photo-1611996575749-79a3a250f948?w=400", avgRating: 4.5 }, createdAt: "" },
-  { id: "c2", userId: "u1", gameId: "2", status: "wishlist",  game: { id: "2", title: "팬데믹",  minPlayers: 2, maxPlayers: 4, thumbnail: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400", avgRating: 4.3 }, createdAt: "" },
-  { id: "c3", userId: "u1", gameId: "3", status: "completed", game: { id: "3", title: "스플렌더", minPlayers: 2, maxPlayers: 4, thumbnail: "https://images.unsplash.com/photo-1577495508048-b635879837f1?w=400", avgRating: 4.2 }, createdAt: "" },
-  { id: "c4", userId: "u1", gameId: "4", status: "fan",       game: { id: "4", title: "윙스팬",  minPlayers: 1, maxPlayers: 5, thumbnail: "https://images.unsplash.com/photo-1570979188870-5ed9bebe4dac?w=400", avgRating: 4.7 }, createdAt: "" },
-];
-
 const MOCK_RATINGS: Rating[] = [
-  { id: "r1", userId: "u1", gameId: "1", game: { id: "1", title: "카탄",   minPlayers: 3, maxPlayers: 4, thumbnail: "https://images.unsplash.com/photo-1611996575749-79a3a250f948?w=400" }, score: 8.5, createdAt: "", updatedAt: "" },
+  { id: "r1", userId: "u1", gameId: "1", game: { id: "1", title: "카탄", minPlayers: 3, maxPlayers: 4, thumbnail: "https://images.unsplash.com/photo-1611996575749-79a3a250f948?w=400" }, score: 8.5, createdAt: "", updatedAt: "" },
   { id: "r2", userId: "u1", gameId: "2", game: { id: "2", title: "팬데믹", minPlayers: 2, maxPlayers: 4, thumbnail: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400" }, score: 9.0, createdAt: "", updatedAt: "" },
 ];
 
@@ -76,7 +55,6 @@ const MOCK_SELECTIONS: Selection[] = [
   { id: "s2", userId: "u1", title: "입문자 추천 게임", isPublic: false, games: [], gameCount: 8, createdAt: "", updatedAt: "" },
 ];
 
-// 월별 그룹
 function groupByMonth(logs: PlayLog[]) {
   const map: Record<string, PlayLog[]> = {};
   for (const log of logs) {
@@ -89,8 +67,12 @@ function groupByMonth(logs: PlayLog[]) {
 }
 
 export default function MyPage() {
-  const { isLoggedIn, isLoading } = useAuthStore();
+  const { isLoggedIn, isLoading, user, profile } = useAuthStore();
   const [collectionFilter, setCollectionFilter] = useState<CollectionStatus | "all">("all");
+
+  const userId = user?.id;
+  const { data: countsData } = useCollectionCounts(userId);
+  const { data: collectionData } = useCollectionGames(userId, collectionFilter);
 
   if (isLoading) return null;
 
@@ -102,10 +84,12 @@ export default function MyPage() {
     );
   }
 
-  const filteredCollections =
-    collectionFilter === "all"
-      ? MOCK_COLLECTIONS
-      : MOCK_COLLECTIONS.filter((c) => c.status === collectionFilter);
+  const nickname = profile?.nickname ?? user?.email?.split("@")[0] ?? "사용자";
+  const bio = profile?.bio ?? null;
+  const profileImage = profile?.profile_image ?? null;
+  const collections = collectionData?.data ?? [];
+  const counts = countsData?.counts ?? {};
+  const total = countsData?.total ?? 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -113,33 +97,23 @@ export default function MyPage() {
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-screen-lg mx-auto px-4 pt-6 pb-5">
           <div className="flex items-start gap-4">
-            {/* 아바타 */}
             <div className="w-16 h-16 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-2xl font-bold text-gray-500 overflow-hidden">
-              {MOCK_USER.profileImage ? (
-                <Image src={MOCK_USER.profileImage} alt={MOCK_USER.nickname} width={64} height={64} className="object-cover" />
+              {profileImage ? (
+                <Image src={profileImage} alt={nickname} width={64} height={64} className="object-cover" />
               ) : (
-                MOCK_USER.nickname[0]
+                nickname[0]
               )}
             </div>
-            {/* 정보 */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold text-gray-900">{MOCK_USER.nickname}</h1>
+                <h1 className="text-lg font-bold text-gray-900">{nickname}</h1>
                 <Link href={ROUTES.SETTINGS} className="p-1 text-gray-400 hover:text-gray-600">
                   <Settings className="w-4 h-4" />
                 </Link>
               </div>
-              {MOCK_USER.bio && (
-                <p className="text-sm text-gray-500 mt-0.5 truncate">{MOCK_USER.bio}</p>
+              {bio && (
+                <p className="text-sm text-gray-500 mt-0.5 truncate">{bio}</p>
               )}
-              <div className="flex items-center gap-4 mt-2">
-                <span className="text-xs text-gray-500">
-                  <span className="font-semibold text-gray-900">{MOCK_USER.followerCount}</span> 팔로워
-                </span>
-                <span className="text-xs text-gray-500">
-                  <span className="font-semibold text-gray-900">{MOCK_USER.followingCount}</span> 팔로잉
-                </span>
-              </div>
             </div>
             <Link href={ROUTES.PROFILE_EDIT} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
               프로필 수정
@@ -149,10 +123,10 @@ export default function MyPage() {
           {/* 통계 카드 */}
           <div className="grid grid-cols-4 gap-3 mt-5">
             {[
-              { label: "게임", value: MOCK_STATS.gameCount, Icon: Grid3X3 },
-              { label: "기록", value: MOCK_STATS.logCount, Icon: BookOpen },
-              { label: "평점", value: MOCK_STATS.ratingCount, Icon: Star },
-              { label: "셀렉션", value: MOCK_STATS.selectionCount, Icon: List },
+              { label: "게임", value: total, Icon: Grid3X3 },
+              { label: "기록", value: MOCK_LOGS.length, Icon: BookOpen },
+              { label: "평점", value: MOCK_RATINGS.length, Icon: Star },
+              { label: "셀렉션", value: MOCK_SELECTIONS.length, Icon: List },
             ].map(({ label, value, Icon }) => (
               <div key={label} className="bg-gray-50 rounded-xl p-3 text-center">
                 <Icon className="w-4 h-4 text-gray-400 mx-auto mb-1" />
@@ -179,8 +153,8 @@ export default function MyPage() {
           <TabsList className="w-full bg-white border-b border-gray-100 rounded-none h-auto p-0 justify-start">
             {[
               { value: "collection", label: "컬렉션" },
-              { value: "logs",       label: "기록" },
-              { value: "ratings",    label: "평점" },
+              { value: "logs", label: "기록" },
+              { value: "ratings", label: "평점" },
               { value: "selections", label: "셀렉션" },
             ].map((tab) => (
               <TabsTrigger
@@ -195,44 +169,23 @@ export default function MyPage() {
 
           {/* 컬렉션 탭 */}
           <TabsContent value="collection" className="mt-0">
-            {/* 8종 상태 필터 칩 */}
-            <div className="bg-white px-4 py-3 border-b border-gray-100 flex gap-2 overflow-x-auto scrollbar-none">
-              <button
-                onClick={() => setCollectionFilter("all")}
-                className={cn(
-                  "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
-                  collectionFilter === "all" ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600"
-                )}
-              >
-                전체 {MOCK_COLLECTIONS.length}
-              </button>
-              {COLLECTION_STATUSES.map((s) => {
-                const count = MOCK_COLLECTIONS.filter((c) => c.status === s.value).length;
-                if (count === 0) return null;
-                return (
-                  <button
-                    key={s.value}
-                    onClick={() => setCollectionFilter(s.value)}
-                    className={cn(
-                      "flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
-                      collectionFilter === s.value ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600"
-                    )}
-                  >
-                    <span>{s.emoji}</span>
-                    {s.label} {count}
-                  </button>
-                );
-              })}
-            </div>
+            <CollectionCategoryBar
+              counts={counts}
+              total={total}
+              selected={collectionFilter}
+              onSelect={setCollectionFilter}
+            />
 
-            {filteredCollections.length > 0 ? (
-              <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                {filteredCollections.map((c) => (
-                  <GameCard key={c.id} game={c.game} />
-                ))}
-              </div>
+            {collections.length > 0 ? (
+              <CollectionList collections={collections} isOwner />
             ) : (
-              <EmptyState icon="📦" title="컬렉션이 비어있어요" description="게임을 추가해 컬렉션을 채워보세요" ctaLabel="게임 탐색하기" ctaHref={ROUTES.GAMES} />
+              <EmptyState
+                icon="📦"
+                title="컬렉션이 비어있어요"
+                description="게임을 추가해 컬렉션을 채워보세요"
+                ctaLabel="게임 탐색하기"
+                ctaHref={ROUTES.GAMES}
+              />
             )}
           </TabsContent>
 
@@ -250,7 +203,6 @@ export default function MyPage() {
                     </div>
                   </div>
                 ))}
-                {/* FAB */}
                 <Link
                   href={ROUTES.MY_LOGS_WRITE}
                   className="fixed bottom-20 right-4 md:bottom-8 w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg flex items-center justify-center z-30 hover:bg-primary-700 transition-colors"

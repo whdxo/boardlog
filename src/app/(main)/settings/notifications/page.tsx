@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import MobileHeader from "@/components/layout/MobileHeader";
+import LoginPrompt from "@/components/common/LoginPrompt";
+import { useAuthStore } from "@/stores/authStore";
 
 interface ToggleRowProps {
   label: string;
@@ -37,6 +39,16 @@ export default function NotificationSettingsPage() {
   const [playReminder, setPlayReminder] = useState(false);
   const [system, setSystem] = useState(true);
   const [marketing, setMarketing] = useState(false);
+  const { isLoggedIn, isLoading } = useAuthStore();
+
+  if (isLoading) return null;
+  if (!isLoggedIn) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <LoginPrompt />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-lg mx-auto">

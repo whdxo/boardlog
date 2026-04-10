@@ -5,10 +5,22 @@ import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import MobileHeader from "@/components/layout/MobileHeader";
+import LoginPrompt from "@/components/common/LoginPrompt";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function WithdrawPage() {
   const [confirmed, setConfirmed] = useState("");
+  const { isLoggedIn, isLoading } = useAuthStore();
   const canWithdraw = confirmed === "탈퇴";
+
+  if (isLoading) return null;
+  if (!isLoggedIn) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <LoginPrompt />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-lg mx-auto">

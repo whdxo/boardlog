@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { X, Plus, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROUTES, USED_TYPE_OPTIONS, ITEM_CONDITION_OPTIONS, TRADE_METHOD_OPTIONS } from "@/constants";
+import { useAuthStore } from "@/stores/authStore";
+import LoginPrompt from "@/components/common/LoginPrompt";
 import type { UsedType, ItemCondition, TradeMethod } from "@/types";
 
 export default function UsedWritePage() {
@@ -15,8 +17,18 @@ export default function UsedWritePage() {
   const [condition, setCondition] = useState<ItemCondition>("good");
   const [tradeMethod, setTradeMethod] = useState<TradeMethod>("both");
   const [content, setContent] = useState("");
+  const { isLoggedIn, isLoading } = useAuthStore();
 
   const canSubmit = title.trim() && content.trim();
+
+  if (isLoading) return null;
+  if (!isLoggedIn) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <LoginPrompt title="로그인이 필요해요" description="거래글을 작성하려면 로그인해주세요" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col">

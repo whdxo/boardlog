@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { X, Image as ImageIcon, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ROUTES, POST_CATEGORIES } from "@/constants";
+import { useAuthStore } from "@/stores/authStore";
+import LoginPrompt from "@/components/common/LoginPrompt";
 import type { PostCategory } from "@/types";
 
 export default function NewPostPage() {
@@ -12,8 +14,18 @@ export default function NewPostPage() {
   const [category, setCategory] = useState<PostCategory>("review");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const { isLoggedIn, isLoading } = useAuthStore();
 
   const canSubmit = title.trim() && content.trim();
+
+  if (isLoading) return null;
+  if (!isLoggedIn) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <LoginPrompt title="로그인이 필요해요" description="글을 작성하려면 로그인해주세요" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col">

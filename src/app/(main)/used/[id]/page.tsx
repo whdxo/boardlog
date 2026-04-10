@@ -1,14 +1,20 @@
 "use client";
 
-import { use } from "react";
+import { useState, use } from "react";
 import { ArrowLeft, MoreHorizontal } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { CommentInput } from "@/components/community/CommentInput";
+import { LoginPromptSheet } from "@/components/layout/LoginPromptSheet";
 import { cn } from "@/lib/utils";
 import { USED_TYPE_OPTIONS, ITEM_CONDITION_OPTIONS, TRADE_METHOD_OPTIONS } from "@/constants";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function UsedDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   void id;
+  const [loginSheetOpen, setLoginSheetOpen] = useState(false);
+  const { isLoggedIn } = useAuthStore();
+  const pathname = usePathname();
 
   const post = {
     type: "sell" as const, status: "active" as const,
@@ -85,7 +91,11 @@ export default function UsedDetailPage({ params }: { params: Promise<{ id: strin
         </div>
       </div>
 
-      <CommentInput onSubmit={(text) => console.log("댓글:", text)} placeholder="댓글로 문의하세요..." />
+      <CommentInput onSubmit={(text) => {
+        if (!isLoggedIn) { setLoginSheetOpen(true); return; }
+        console.log("댓글:", text);
+      }} placeholder="댓글로 문의하세요..." />
+      <LoginPromptSheet open={loginSheetOpen} onClose={() => setLoginSheetOpen(false)} callbackUrl={pathname} />
     </div>
   );
 }

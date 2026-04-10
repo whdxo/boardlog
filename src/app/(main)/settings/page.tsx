@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { ChevronRight, User, Lock, Bell, AlertTriangle } from "lucide-react";
 import MobileHeader from "@/components/layout/MobileHeader";
+import LoginPrompt from "@/components/common/LoginPrompt";
 import { ROUTES } from "@/constants";
+import { useAuthStore } from "@/stores/authStore";
 
 const MENU_GROUPS = [
   {
@@ -29,6 +33,16 @@ const MENU_GROUPS = [
 ] as const;
 
 export default function SettingsPage() {
+  const { isLoggedIn, isLoading } = useAuthStore();
+  if (isLoading) return null;
+  if (!isLoggedIn) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <LoginPrompt />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-lg mx-auto">
       <MobileHeader variant="back" title="설정" />

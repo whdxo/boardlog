@@ -297,6 +297,45 @@ export interface Notification {
   createdAt: string;
 }
 
+// ── GameStats (내 게임 기록 통계) ─────────────────
+
+export interface GameStats {
+  gameId: string;
+  game: Game;
+  firstPlayedAt: string | null;
+  totalPlays: number;
+  myRating: number | null;
+  scoreStats: {
+    highest: number | null;
+    lowest: number | null;
+    average: number | null;
+    mostWinner: { name: string; wins: number } | null;
+  };
+  playerStats: PlayerStatRow[];
+  playerCountRatings: PlayerCountRating[];
+  locationStats: LocationStat[];
+}
+
+export interface PlayerStatRow {
+  playerName: string;
+  totalPlays: number;
+  wins: number;
+  winRate: number;
+  avgScore: number;
+  highScore: number;
+}
+
+export interface PlayerCountRating {
+  playerCount: number;
+  playCount: number;
+  avgRating: number;
+}
+
+export interface LocationStat {
+  location: string;
+  playCount: number;
+}
+
 // ── API / Pagination ──────────────────────────────
 
 export interface PaginatedResponse<T> {
