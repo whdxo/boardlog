@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { X } from "lucide-react";
-import { Input } from "@/components/ui/input";
+
 
 interface PlayerChipsProps {
   players: string[];

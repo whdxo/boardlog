@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, ChevronDown, User } from "lucide-react";
 import { buttonVariants } from "@/lib/button-variants";
@@ -88,9 +89,11 @@ export default function GNB() {
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
                   {profile?.profile_image ? (
-                    <img
+                    <Image
                       src={profile.profile_image}
                       alt={displayName}
+                      width={32}
+                      height={32}
                       className="w-8 h-8 rounded-full object-cover"
                     />
                   ) : (

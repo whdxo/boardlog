@@ -2,6 +2,7 @@
 
 import { use } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, MoreHorizontal } from "lucide-react";
 import { ROUTES } from "@/constants";
 import { useAuthStore } from "@/stores/authStore";
@@ -52,7 +53,7 @@ export default function SelectionDetailPage({ params }: { params: Promise<{ id: 
             >
               <span className="text-lg font-bold text-gray-300 w-5 text-center">{i + 1}</span>
               <div className="relative w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
-                <img src={g.thumbnail} alt={g.title} className="object-cover w-full h-full" />
+                <Image src={g.thumbnail} alt={g.title} fill className="object-cover" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-gray-900">{g.title}</p>
