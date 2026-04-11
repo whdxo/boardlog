@@ -73,9 +73,26 @@ export const PRICE_OPTIONS = [
   { label: "6만원~", value: "60000+" },
 ];
 
+export const GENRE_MAP: Record<string, string> = {
+  Strategy:     "전략",
+  Family:       "가족",
+  Party:        "파티",
+  Abstract:     "추상",
+  Thematic:     "테마",
+  War:          "워게임",
+  Children:     "어린이",
+  Customizable: "커스텀",
+};
+
 export const GENRE_OPTIONS = [
-  "전략", "가족", "파티", "추리", "협력", "경제", "카드", "주사위",
-  "테마", "추상", "워게임", "덱빌딩",
+  { label: "전략",   value: "Strategy" },
+  { label: "가족",   value: "Family" },
+  { label: "파티",   value: "Party" },
+  { label: "추상",   value: "Abstract" },
+  { label: "테마",   value: "Thematic" },
+  { label: "워게임", value: "War" },
+  { label: "어린이", value: "Children" },
+  { label: "커스텀", value: "Customizable" },
 ];
 
 export const PLAY_TIME_OPTIONS = [

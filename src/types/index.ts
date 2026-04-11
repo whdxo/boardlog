@@ -352,6 +352,7 @@ export interface GameFilter {
   search?: string;
   players?: string;
   priceRange?: string;
+  genre?: string;
   genres?: string[];
   playTime?: string;
   minAge?: string;
