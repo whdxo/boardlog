@@ -9,9 +9,8 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { GENRE_OPTIONS, PLAY_TIME_OPTIONS, AGE_OPTIONS } from "@/constants";
+import { PLAYER_OPTIONS, PRICE_OPTIONS, PLAY_TIME_OPTIONS, AGE_OPTIONS } from "@/constants";
 import type { GameFilter } from "@/types";
-// FilterSheet uses individual state slices instead of a single local GameFilter object
 
 interface FilterSheetProps {
   open: boolean;
@@ -21,7 +20,7 @@ interface FilterSheetProps {
 }
 
 const CHIP = "h-8 px-3.5 rounded-full text-caption font-medium border transition-colors";
-const CHIP_DEFAULT = "border-gray-200 text-gray-700 hover:border-gray-300";
+const CHIP_DEFAULT = "border-gray-200 bg-white text-gray-700 hover:border-gray-300";
 const CHIP_ACTIVE = "border-primary-500 bg-primary-50 text-primary-700";
 
 export default function FilterSheet({
@@ -30,47 +29,71 @@ export default function FilterSheet({
   filter,
   onApply,
 }: FilterSheetProps) {
-  const [selectedGenre, setSelectedGenre] = useState<string | undefined>(
-    filter.genres?.[0]
-  );
+  const [players, setPlayers] = useState<string | undefined>(filter.players);
+  const [priceRange, setPriceRange] = useState<string | undefined>(filter.priceRange);
   const [playTime, setPlayTime] = useState<string | undefined>(filter.playTime);
   const [minAge, setMinAge] = useState<string | undefined>(filter.minAge);
 
+  const hasActive = !!(players || priceRange || playTime || minAge);
+
   function handleReset() {
-    setSelectedGenre(undefined);
+    setPlayers(undefined);
+    setPriceRange(undefined);
     setPlayTime(undefined);
     setMinAge(undefined);
   }
 
   function handleApply() {
-    onApply({
-      genres: selectedGenre ? [selectedGenre] : undefined,
-      playTime,
-      minAge,
-    });
+    onApply({ players, priceRange, playTime, minAge });
     onClose();
   }
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
       <SheetContent side="bottom" className="rounded-t-2xl px-6 pb-8 max-h-[85vh] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>필터</SheetTitle>
+        <SheetHeader className="flex-row items-center justify-between">
+          <SheetTitle>상세 필터</SheetTitle>
+          {hasActive && (
+            <button
+              type="button"
+              onClick={handleReset}
+              className="text-caption text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              초기화
+            </button>
+          )}
         </SheetHeader>
 
-        <div className="flex flex-col gap-6 mt-4">
-          {/* 장르 */}
+        <div className="flex flex-col gap-6 mt-5">
+          {/* 인원수 */}
           <section>
-            <p className="text-caption font-semibold text-gray-500 mb-2">장르</p>
+            <p className="text-caption font-semibold text-gray-900 mb-2.5">인원수</p>
             <div className="flex flex-wrap gap-2">
-              {GENRE_OPTIONS.map((g) => (
+              {PLAYER_OPTIONS.map((opt) => (
                 <button
-                  key={g}
+                  key={opt.value}
                   type="button"
-                  className={cn(CHIP, selectedGenre === g ? CHIP_ACTIVE : CHIP_DEFAULT)}
-                  onClick={() => setSelectedGenre(selectedGenre === g ? undefined : g)}
+                  className={cn(CHIP, players === opt.value ? CHIP_ACTIVE : CHIP_DEFAULT)}
+                  onClick={() => setPlayers(players === opt.value ? undefined : opt.value)}
                 >
-                  {g}
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {/* 가격대 */}
+          <section>
+            <p className="text-caption font-semibold text-gray-900 mb-2.5">가격대</p>
+            <div className="flex flex-wrap gap-2">
+              {PRICE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={cn(CHIP, priceRange === opt.value ? CHIP_ACTIVE : CHIP_DEFAULT)}
+                  onClick={() => setPriceRange(priceRange === opt.value ? undefined : opt.value)}
+                >
+                  {opt.label}
                 </button>
               ))}
             </div>
@@ -78,7 +101,7 @@ export default function FilterSheet({
 
           {/* 플레이 시간 */}
           <section>
-            <p className="text-caption font-semibold text-gray-500 mb-2">플레이 시간</p>
+            <p className="text-caption font-semibold text-gray-900 mb-2.5">플레이 시간</p>
             <div className="flex flex-wrap gap-2">
               {PLAY_TIME_OPTIONS.map((opt) => (
                 <button
@@ -93,9 +116,9 @@ export default function FilterSheet({
             </div>
           </section>
 
-          {/* 연령 */}
+          {/* 권장 연령 */}
           <section>
-            <p className="text-caption font-semibold text-gray-500 mb-2">권장 연령</p>
+            <p className="text-caption font-semibold text-gray-900 mb-2.5">권장 연령</p>
             <div className="flex flex-wrap gap-2">
               {AGE_OPTIONS.map((opt) => (
                 <button
@@ -111,14 +134,9 @@ export default function FilterSheet({
           </section>
         </div>
 
-        <div className="flex gap-3 mt-8">
-          <Button variant="outline" className="flex-1" onClick={handleReset}>
-            초기화
-          </Button>
-          <Button className="flex-1" onClick={handleApply}>
-            적용하기
-          </Button>
-        </div>
+        <Button className="w-full mt-8" onClick={handleApply}>
+          적용하기
+        </Button>
       </SheetContent>
     </Sheet>
   );
