@@ -17,7 +17,7 @@ async function fetchGames(): Promise<Game[]> {
   const { data, error } = await supabase
     .from("games")
     .select("id, title, title_en, thumbnail, min_players, max_players, min_play_time, max_play_time, avg_rating, rating_count, price, genres, designer, publisher, release_year, bgg_id, rank, rank_change, is_new")
-    .order("avg_rating", { ascending: false });
+    .order("rank", { ascending: true, nullsFirst: false });
 
   if (error) throw error;
 
@@ -62,10 +62,24 @@ export default function GamesPage() {
     setFilter((prev) => ({ ...prev, ...partial }));
   }
 
-  const filtered = games.filter((g) => {
-    if (filter.search && !g.title.toLowerCase().includes(filter.search.toLowerCase())) return false;
-    return true;
-  });
+  const activeGenre = filter.genre ?? filter.genres?.[0];
+
+  const filtered = games
+    .filter((g) => {
+      if (filter.search && !g.title.toLowerCase().includes(filter.search.toLowerCase())) return false;
+      if (activeGenre && !g.genres?.includes(activeGenre)) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "popular":    return (a.rank ?? 999999) - (b.rank ?? 999999);
+        case "rating":     return (b.avgRating ?? 0) - (a.avgRating ?? 0);
+        case "price_asc":  return (a.price ?? 999999) - (b.price ?? 999999);
+        case "price_desc": return (b.price ?? 0) - (a.price ?? 0);
+        case "newest":     return (b.releaseYear ?? 0) - (a.releaseYear ?? 0);
+        default:           return 0;
+      }
+    });
 
   return (
     <div className="max-w-[1080px] mx-auto px-4 md:px-6 py-4 md:py-6 flex flex-col gap-4 md:gap-6">
@@ -83,9 +97,9 @@ export default function GamesPage() {
         />
       </div>
 
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <div className="flex items-center justify-between gap-2">
         <p className="text-caption text-gray-500 shrink-0">총 {filtered.length}개</p>
-        <div className="flex gap-1 overflow-x-auto scrollbar-hide pb-0.5 -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="flex gap-1 overflow-x-auto scrollbar-hide pb-0.5">
           {SORT_OPTIONS.map((opt) => (
             <button
               key={opt.value}
