@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { User, Settings, LogOut } from "lucide-react";
 import { buttonVariants } from "@/lib/button-variants";
@@ -40,9 +41,11 @@ export default function ProfilePage() {
       <div className="flex flex-col items-center gap-4 py-6">
         <div className="w-20 h-20 rounded-full bg-primary-100 flex items-center justify-center">
           {profile?.profile_image ? (
-            <img
+            <Image
               src={profile.profile_image}
               alt={displayName}
+              width={80}
+              height={80}
               className="w-20 h-20 rounded-full object-cover"
             />
           ) : (

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useSyncExternalStore } from "react";
 
 export function useMediaQuery(query: string): boolean {

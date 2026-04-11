@@ -5,10 +5,22 @@ import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import MobileHeader from "@/components/layout/MobileHeader";
+import LoginPrompt from "@/components/common/LoginPrompt";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function ProfileEditPage() {
   const [nickname, setNickname] = useState("보드게이머");
   const [bio, setBio] = useState("보드게임을 사랑하는 사람입니다 🎲");
+  const { isLoggedIn, isLoading } = useAuthStore();
+
+  if (isLoading) return null;
+  if (!isLoggedIn) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <LoginPrompt />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-lg mx-auto">

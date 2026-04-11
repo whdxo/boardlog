@@ -1,10 +1,16 @@
+"use client";
+
+import { use } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, MoreHorizontal } from "lucide-react";
 import { ROUTES } from "@/constants";
+import { useAuthStore } from "@/stores/authStore";
 
-export default async function SelectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default function SelectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   void id;
+  const { isLoggedIn } = useAuthStore();
 
   const sel = {
     title: "협력 게임 명작 모음",
@@ -24,9 +30,11 @@ export default async function SelectionDetailPage({ params }: { params: Promise<
         <Link href={ROUTES.MY_SELECTIONS} className="p-1">
           <ArrowLeft className="w-5 h-5 text-gray-700" />
         </Link>
-        <button className="p-1">
-          <MoreHorizontal className="w-5 h-5 text-gray-500" />
-        </button>
+        {isLoggedIn && (
+          <button className="p-1">
+            <MoreHorizontal className="w-5 h-5 text-gray-500" />
+          </button>
+        )}
       </div>
 
       <div className="px-4 pt-6 pb-8">
@@ -45,7 +53,7 @@ export default async function SelectionDetailPage({ params }: { params: Promise<
             >
               <span className="text-lg font-bold text-gray-300 w-5 text-center">{i + 1}</span>
               <div className="relative w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
-                <img src={g.thumbnail} alt={g.title} className="object-cover w-full h-full" />
+                <Image src={g.thumbnail} alt={g.title} fill className="object-cover" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-gray-900">{g.title}</p>

@@ -5,6 +5,8 @@ import { ArrowLeft, Plus, Lock, Globe } from "lucide-react";
 import { buttonVariants } from "@/lib/button-variants";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants";
+import { useAuthStore } from "@/stores/authStore";
+import LoginPrompt from "@/components/common/LoginPrompt";
 import type { Selection } from "@/types";
 
 const MOCK_SELECTIONS: Selection[] = [
@@ -14,6 +16,17 @@ const MOCK_SELECTIONS: Selection[] = [
 ];
 
 export default function SelectionsPage() {
+  const { isLoggedIn, isLoading } = useAuthStore();
+
+  if (isLoading) return null;
+  if (!isLoggedIn) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <LoginPrompt title="로그인이 필요해요" description="셀렉션을 관리하려면 로그인해주세요" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b border-gray-100 sticky top-0 z-10">
