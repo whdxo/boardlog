@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { User } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -12,24 +12,22 @@ import { useMutation } from "@tanstack/react-query";
 import { fetchApi } from "@/lib/fetch-api";
 import { createClient } from "@/lib/supabase/client";
 
-export default function ProfileEditPage() {
-  const { isLoggedIn, isLoading, profile, refreshSession } = useAuthStore();
-  const [nickname, setNickname] = useState("");
-  const [bio, setBio] = useState("");
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+interface Profile {
+  id: string;
+  nickname: string;
+  bio: string | null;
+  profile_image: string | null;
+}
+
+// profile이 준비된 후에만 마운트 — useState 초기값을 직접 사용
+function ProfileEditForm({ profile, refreshSession }: { profile: Profile; refreshSession: () => Promise<unknown> }) {
+  const [nickname, setNickname] = useState(profile.nickname ?? "");
+  const [bio, setBio] = useState(profile.bio ?? "");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(profile.profile_image ?? null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // profile이 로드되면 초기값 설정
-  useEffect(() => {
-    if (profile) {
-      setNickname(profile.nickname ?? "");
-      setBio(profile.bio ?? "");
-      setPreviewUrl(profile.profile_image ?? null);
-    }
-  }, [profile]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -77,15 +75,6 @@ export default function ProfileEditPage() {
     setPendingFile(file);
     setPreviewUrl(URL.createObjectURL(file));
   };
-
-  if (isLoading) return null;
-  if (!isLoggedIn) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-8">
-        <LoginPrompt />
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-lg mx-auto">
@@ -165,4 +154,19 @@ export default function ProfileEditPage() {
       </div>
     </div>
   );
+}
+
+export default function ProfileEditPage() {
+  const { isLoggedIn, isLoading, profile, refreshSession } = useAuthStore();
+
+  if (isLoading || !profile) return null;
+  if (!isLoggedIn) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <LoginPrompt />
+      </div>
+    );
+  }
+
+  return <ProfileEditForm profile={profile} refreshSession={refreshSession} />;
 }
