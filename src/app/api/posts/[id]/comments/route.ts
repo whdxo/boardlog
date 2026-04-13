@@ -121,11 +121,8 @@ export async function POST(
 
     if (error) throw error;
 
-    // comment_count 갱신
-    await supabase
-      .from("posts")
-      .update({ comment_count: post.comment_count + 1 })
-      .eq("id", postId);
+    // comment_count 원자적 증가
+    await supabase.rpc("increment_comment_count", { post_id: postId });
 
     const profile = Array.isArray(comment.profiles)
       ? comment.profiles[0]

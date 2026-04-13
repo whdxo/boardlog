@@ -29,11 +29,8 @@ export async function GET(
       return fail(API_ERROR.NOT_FOUND, "게시글을 찾을 수 없습니다", 404);
     }
 
-    // 조회수 증가 (오류가 나도 무시)
-    void supabase
-      .from("posts")
-      .update({ view_count: row.view_count + 1 })
-      .eq("id", id);
+    // 조회수 원자적 증가
+    await supabase.rpc("increment_view_count", { post_id: id });
 
     // isLiked 확인
     let isLiked = false;

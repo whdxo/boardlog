@@ -27,20 +27,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error) throw error;
-
-    // avg_rating 재계산
-    const { data: avgResult } = await supabase
-      .from("ratings")
-      .select("score")
-      .eq("game_id", gameId);
-
-    if (avgResult && avgResult.length > 0) {
-      const avg = avgResult.reduce((sum, r) => sum + Number(r.score), 0) / avgResult.length;
-      await supabase
-        .from("games")
-        .update({ avg_rating: Math.round(avg * 10) / 10, rating_count: avgResult.length })
-        .eq("id", gameId);
-    }
+    // avg_rating / rating_count는 DB 트리거(ratings_update_avg)가 자동 갱신
 
     return ok({
       id: data.id,
@@ -74,22 +61,7 @@ export async function DELETE(request: Request) {
       .eq("game_id", gameId);
 
     if (error) throw error;
-
-    // avg_rating 재계산
-    const { data: avgResult } = await supabase
-      .from("ratings")
-      .select("score")
-      .eq("game_id", gameId);
-
-    const count = avgResult?.length ?? 0;
-    const avg = count > 0
-      ? avgResult!.reduce((sum, r) => sum + Number(r.score), 0) / count
-      : 0;
-
-    await supabase
-      .from("games")
-      .update({ avg_rating: Math.round(avg * 10) / 10, rating_count: count })
-      .eq("id", gameId);
+    // avg_rating / rating_count는 DB 트리거(ratings_update_avg)가 자동 갱신
 
     return ok({ gameId });
   } catch (e) {

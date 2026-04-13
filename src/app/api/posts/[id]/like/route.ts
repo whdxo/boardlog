@@ -31,7 +31,6 @@ export async function POST(
       .maybeSingle();
 
     let liked: boolean;
-    let newCount: number;
 
     if (existing) {
       // 좋아요 취소
@@ -41,7 +40,7 @@ export async function POST(
         .eq("user_id", user.id)
         .eq("post_id", postId);
 
-      newCount = Math.max(0, post.like_count - 1);
+      await supabase.rpc("decrement_like_count", { post_id: postId });
       liked = false;
     } else {
       // 좋아요 추가
@@ -49,17 +48,11 @@ export async function POST(
         .from("post_likes")
         .insert({ user_id: user.id, post_id: postId });
 
-      newCount = post.like_count + 1;
+      await supabase.rpc("increment_like_count", { post_id: postId });
       liked = true;
     }
 
-    // like_count 캐시 업데이트
-    await supabase
-      .from("posts")
-      .update({ like_count: newCount })
-      .eq("id", postId);
-
-    return ok({ liked, likeCount: newCount });
+    return ok({ liked, likeCount: liked ? post.like_count + 1 : Math.max(0, post.like_count - 1) });
   } catch (e) {
     return handleApiError(e);
   }

@@ -39,20 +39,12 @@ export async function DELETE(
 
     if (deleteError) throw deleteError;
 
-    // comment_count 갱신: 본 댓글 1 + 대댓글 수
+    // comment_count 원자적 감소: 본 댓글 1 + 대댓글 수
     const totalDeleted = 1 + (replyCount ?? 0);
-    const { data: post } = await supabase
-      .from("posts")
-      .select("comment_count")
-      .eq("id", comment.post_id)
-      .single();
-
-    if (post) {
-      await supabase
-        .from("posts")
-        .update({ comment_count: Math.max(0, post.comment_count - totalDeleted) })
-        .eq("id", comment.post_id);
-    }
+    await supabase.rpc("decrement_comment_count", {
+      post_id: comment.post_id,
+      amount: totalDeleted,
+    });
 
     return ok({ id });
   } catch (e) {
