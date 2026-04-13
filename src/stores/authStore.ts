@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { createClient } from "@/lib/supabase/client";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { useCollectionStore } from "./collectionStore";
 
 interface Profile {
   id: string;
@@ -74,11 +75,36 @@ async function syncAuthState(
   };
   set({ user, profile: fallbackProfile, isLoggedIn: true, isLoading: false });
 
-  // 백그라운드에서 profiles 테이블 조회
+  // 백그라운드에서 profiles 테이블 + collections/ratings 조회
   fetchProfileWithRetry(supabase, user.id).then((profile) => {
     if (profile) {
       set({ profile });
     }
+  });
+
+  Promise.all([
+    supabase.from("collections").select("id, user_id, game_id, status, created_at").eq("user_id", user.id),
+    supabase.from("ratings").select("id, user_id, game_id, score, comment, created_at, updated_at").eq("user_id", user.id),
+  ]).then(([collectionsRes, ratingsRes]) => {
+    const collections = (collectionsRes.data ?? []).map((c) => ({
+      id: c.id,
+      userId: c.user_id,
+      gameId: c.game_id,
+      status: c.status,
+      createdAt: c.created_at,
+      // game field not needed for store initialization
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    })) as any[];
+    const ratings = (ratingsRes.data ?? []).map((r) => ({
+      id: r.id,
+      userId: r.user_id,
+      gameId: r.game_id,
+      score: r.score,
+      comment: r.comment,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    }));
+    useCollectionStore.getState().initFromServer(collections, ratings);
   });
 
   return user;
@@ -99,8 +125,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
         await syncAuthState(supabase, session?.user ?? null, set);
+        if (event === "SIGNED_OUT") {
+          useCollectionStore.getState().reset();
+        }
       }
     );
 
@@ -118,5 +147,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     const supabase = createClient();
     await supabase.auth.signOut();
     set({ user: null, profile: null, isLoggedIn: false, isLoading: false });
+    useCollectionStore.getState().reset();
   },
 }));

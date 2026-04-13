@@ -33,7 +33,7 @@ export function PostCard({ post }: PostCardProps) {
             {cat.label}
           </span>
         )}
-        <span className="text-xs text-gray-400">{post.user.nickname}</span>
+        <span className="text-xs text-gray-400">{post.user?.nickname ?? "알 수 없음"}</span>
         <span className="text-xs text-gray-300">·</span>
         <span className="text-xs text-gray-400">{timeAgo(post.createdAt)}</span>
       </div>
