@@ -4,12 +4,14 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
-import { Share2, Grid3X3 } from "lucide-react";
+import { Share2, Grid3X3, UserPlus, UserCheck } from "lucide-react";
 import CollectionCategoryBar from "@/components/my/CollectionCategoryBar";
 import CollectionList from "@/components/my/CollectionList";
 import EmptyState from "@/components/common/EmptyState";
 import { getProfileByNickname } from "@/lib/api/publicProfile";
 import { getCollectionCounts, getCollectionGames } from "@/lib/api/collection";
+import { useFollowStatus, useToggleFollow } from "@/hooks/useFollow";
+import { useAuthStore } from "@/stores/authStore";
 import { ROUTES } from "@/constants";
 import type { CollectionStatus } from "@/types";
 
@@ -17,6 +19,7 @@ export default function PublicProfilePage() {
   const params = useParams();
   const nickname = decodeURIComponent(params.nickname as string);
   const [collectionFilter, setCollectionFilter] = useState<CollectionStatus | "all">("all");
+  const { isLoggedIn, user: currentUser } = useAuthStore();
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["users", "byNickname", nickname],
@@ -24,6 +27,10 @@ export default function PublicProfilePage() {
   });
 
   const userId = profile?.id;
+  const isOwnProfile = !!currentUser && !!userId && currentUser.id === userId;
+
+  const { data: followData } = useFollowStatus(userId, isLoggedIn && !isOwnProfile);
+  const toggleFollow = useToggleFollow(userId ?? "");
 
   const { data: countsData } = useQuery({
     queryKey: ["users", "collectionCounts", userId],
@@ -85,12 +92,31 @@ export default function PublicProfilePage() {
                 <p className="text-sm text-gray-500 mt-0.5 truncate">{profile.bio}</p>
               )}
             </div>
-            <button
-              onClick={handleShare}
-              className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <Share2 size={18} />
-            </button>
+            <div className="flex items-center gap-2">
+              {!isOwnProfile && isLoggedIn && (
+                <button
+                  onClick={() => toggleFollow.mutate({ isFollowing: followData?.isFollowing ?? false })}
+                  disabled={toggleFollow.isPending}
+                  className={
+                    followData?.isFollowing
+                      ? "flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                      : "flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+                  }
+                >
+                  {followData?.isFollowing ? (
+                    <><UserCheck size={14} />팔로잉</>
+                  ) : (
+                    <><UserPlus size={14} />팔로우</>
+                  )}
+                </button>
+              )}
+              <button
+                onClick={handleShare}
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <Share2 size={18} />
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 mt-4 bg-gray-50 rounded-xl p-3">

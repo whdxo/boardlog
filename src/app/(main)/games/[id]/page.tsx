@@ -15,6 +15,9 @@ import { LoginPromptSheet } from "@/components/layout/LoginPromptSheet";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthStore } from "@/stores/authStore";
+import { useCollectionStore } from "@/stores/collectionStore";
+import { useSetCollection, useRemoveCollection } from "@/hooks/useCollection";
+import { useSaveRating, useDeleteRating } from "@/hooks/useRating";
 import { COLLECTION_STATUS_LABEL } from "@/constants";
 import type { Game, CollectionStatus } from "@/types";
 
@@ -64,11 +67,18 @@ export default function GameDetailPage({ params }: GameDetailPageProps) {
 
   const [ratingOpen, setRatingOpen] = useState(false);
   const [collectionOpen, setCollectionOpen] = useState(false);
-  const [myRating, setMyRating] = useState<number | undefined>();
-  const [collectionStatus, setCollectionStatus] = useState<CollectionStatus | null>(null);
   const [loginSheetOpen, setLoginSheetOpen] = useState(false);
   const { isLoggedIn } = useAuthStore();
   const pathname = usePathname();
+
+  const { statuses, ratings } = useCollectionStore();
+  const collectionStatus = id ? (statuses[id] ?? null) : null;
+  const myRating = id ? (ratings[id] ?? undefined) : undefined;
+
+  const setCollection = useSetCollection(id);
+  const removeCollection = useRemoveCollection(id);
+  const saveRating = useSaveRating(id);
+  const deleteRating = useDeleteRating(id);
 
   const handleCollectionClick = () => {
     if (!isLoggedIn) { setLoginSheetOpen(true); return; }
@@ -210,8 +220,8 @@ export default function GameDetailPage({ params }: GameDetailPageProps) {
         onClose={() => setRatingOpen(false)}
         gameName={game.title}
         initialRating={myRating}
-        onSave={setMyRating}
-        onDelete={myRating ? () => setMyRating(undefined) : undefined}
+        onSave={(score) => { saveRating.mutate(score); setRatingOpen(false); }}
+        onDelete={myRating ? () => { deleteRating.mutate(); setRatingOpen(false); } : undefined}
       />
 
       {/* 로그인 유도 시트 */}
@@ -222,7 +232,11 @@ export default function GameDetailPage({ params }: GameDetailPageProps) {
         open={collectionOpen}
         onClose={() => setCollectionOpen(false)}
         currentStatus={collectionStatus}
-        onSelect={setCollectionStatus}
+        onSelect={(status: CollectionStatus | null) => {
+          if (status) setCollection.mutate(status);
+          else removeCollection.mutate();
+          setCollectionOpen(false);
+        }}
       />
     </>
   );

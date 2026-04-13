@@ -116,6 +116,7 @@ export interface PlayLog {
   rating?: number;
   memo?: string;
   scores?: PlayerScore[];
+  visibility: "public" | "private";
   createdAt: string;
   updatedAt: string;
 }
@@ -135,6 +136,7 @@ export interface PlayLogFormData {
   rating?: number;
   memo: string;
   scores?: PlayerScore[];
+  visibility: "public" | "private";
 }
 
 // ── Community ─────────────────────────────────────
@@ -144,7 +146,7 @@ export type PostCategory = "review" | "info" | "strategy" | "free";
 export interface Post {
   id: string;
   userId: string;
-  user: User;
+  user: User | null;
   category: PostCategory;
   title: string;
   content: string;

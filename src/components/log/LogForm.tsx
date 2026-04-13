@@ -33,6 +33,9 @@ export default function LogForm({
   const [location, setLocation] = useState(initialData?.location ?? "");
   const [rating, setRating] = useState(initialData?.rating ?? 0);
   const [memo, setMemo] = useState(initialData?.memo ?? "");
+  const [visibility, setVisibility] = useState<"public" | "private">(
+    initialData?.visibility ?? "public"
+  );
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -44,6 +47,7 @@ export default function LogForm({
       location,
       rating: rating || undefined,
       memo,
+      visibility,
     });
   }
 
@@ -113,6 +117,29 @@ export default function LogForm({
           rows={4}
           className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-body resize-none placeholder:text-gray-400"
         />
+      </Field>
+
+      {/* 공개 범위 */}
+      <Field label="공개 범위">
+        <div className="flex gap-2">
+          {([
+            { value: "public", label: "전체 공개" },
+            { value: "private", label: "나만 보기" },
+          ] as const).map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setVisibility(opt.value)}
+              className={
+                visibility === opt.value
+                  ? "flex-1 py-2 rounded-xl border-2 border-primary-500 text-primary-600 text-caption font-semibold transition-colors"
+                  : "flex-1 py-2 rounded-xl border border-gray-200 text-gray-500 text-caption transition-colors hover:border-gray-300"
+              }
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </Field>
 
       <Button type="submit" className="w-full" disabled={!game || loading}>
