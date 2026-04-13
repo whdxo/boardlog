@@ -1,29 +1,12 @@
 "use client";
 
-import { notFound } from "next/navigation";
 import { use } from "react";
 import MobileHeader from "@/components/layout/MobileHeader";
 import LogForm from "@/components/log/LogForm";
 import LoginPrompt from "@/components/common/LoginPrompt";
 import { useAuthStore } from "@/stores/authStore";
-import type { PlayLog, PlayLogFormData } from "@/types";
-
-// Mock data — same as detail page
-const MOCK_LOGS: Record<string, PlayLog> = {
-  "1": {
-    id: "1",
-    userId: "u1",
-    gameId: "1",
-    game: { id: "1", title: "카탄", minPlayers: 3, maxPlayers: 4, thumbnail: "https://images.unsplash.com/photo-1611996575749-79a3a250f948?w=400" },
-    playedAt: "2024-03-15",
-    players: ["지수", "민준", "서연"],
-    location: "보드게임 카페",
-    rating: 4,
-    memo: "정말 재밌었다! 다음에 또 하고 싶다.",
-    createdAt: "2024-03-15T12:00:00Z",
-    updatedAt: "2024-03-15T12:00:00Z",
-  },
-};
+import { usePlayLog, useUpdatePlayLog } from "@/hooks/usePlayLog";
+import type { PlayLogFormData } from "@/types";
 
 interface LogEditPageProps {
   params: Promise<{ id: string }>;
@@ -31,9 +14,12 @@ interface LogEditPageProps {
 
 export default function LogEditPage({ params }: LogEditPageProps) {
   const { id } = use(params);
-  const { isLoggedIn, isLoading } = useAuthStore();
+  const { isLoggedIn, isLoading: authLoading, user } = useAuthStore();
+  const { data: log, isLoading: logLoading } = usePlayLog(id);
+  const updatePlayLog = useUpdatePlayLog(id);
 
-  if (isLoading) return null;
+  if (authLoading || logLoading) return null;
+
   if (!isLoggedIn) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
@@ -42,13 +28,25 @@ export default function LogEditPage({ params }: LogEditPageProps) {
     );
   }
 
-  const log = MOCK_LOGS[id];
+  if (!log) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <p className="text-sm text-gray-400">기록을 찾을 수 없습니다</p>
+      </div>
+    );
+  }
 
-  if (!log) notFound();
+  // 본인 로그만 수정 가능
+  if (log.userId !== user?.id) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <p className="text-sm text-gray-400">수정 권한이 없습니다</p>
+      </div>
+    );
+  }
 
   function handleSubmit(data: PlayLogFormData) {
-    // TODO: API 연동
-    console.log("update", id, data);
+    updatePlayLog.mutate(data);
   }
 
   return (
@@ -65,9 +63,11 @@ export default function LogEditPage({ params }: LogEditPageProps) {
             location: log.location ?? "",
             rating: log.rating,
             memo: log.memo ?? "",
+            visibility: log.visibility,
           }}
           onSubmit={handleSubmit}
           submitLabel="수정 완료"
+          loading={updatePlayLog.isPending}
         />
       </div>
     </div>

@@ -1,17 +1,82 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { User } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import MobileHeader from "@/components/layout/MobileHeader";
 import LoginPrompt from "@/components/common/LoginPrompt";
 import { useAuthStore } from "@/stores/authStore";
+import { useMutation } from "@tanstack/react-query";
+import { fetchApi } from "@/lib/fetch-api";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ProfileEditPage() {
-  const [nickname, setNickname] = useState("보드게이머");
-  const [bio, setBio] = useState("보드게임을 사랑하는 사람입니다 🎲");
-  const { isLoggedIn, isLoading } = useAuthStore();
+  const { isLoggedIn, isLoading, profile, refreshSession } = useAuthStore();
+  const [nickname, setNickname] = useState("");
+  const [bio, setBio] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // profile이 로드되면 초기값 설정
+  useEffect(() => {
+    if (profile) {
+      setNickname(profile.nickname ?? "");
+      setBio(profile.bio ?? "");
+      setPreviewUrl(profile.profile_image ?? null);
+    }
+  }, [profile]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      let profileImageUrl: string | undefined;
+
+      // 이미지 업로드 (변경된 경우만)
+      if (pendingFile && profile) {
+        const supabase = createClient();
+        const ext = pendingFile.name.split(".").pop() ?? "jpg";
+        const path = `avatars/${profile.id}/${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(path, pendingFile, { upsert: true });
+
+        if (uploadError) throw new Error("이미지 업로드에 실패했습니다");
+
+        const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+        profileImageUrl = publicUrl;
+      }
+
+      return fetchApi("/api/profile", {
+        method: "PATCH",
+        body: JSON.stringify({
+          nickname: nickname.trim(),
+          bio: bio.trim(),
+          ...(profileImageUrl ? { profile_image: profileImageUrl } : {}),
+        }),
+      });
+    },
+    onSuccess: () => {
+      setSuccessMsg("저장되었습니다");
+      setPendingFile(null);
+      setErrorMsg(null);
+      void refreshSession();
+      setTimeout(() => setSuccessMsg(null), 3000);
+    },
+    onError: (e: Error) => {
+      setErrorMsg(e.message);
+    },
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPendingFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
 
   if (isLoading) return null;
   if (!isLoggedIn) {
@@ -30,15 +95,33 @@ export default function ProfileEditPage() {
 
         {/* 프로필 이미지 */}
         <div className="flex flex-col items-center gap-3">
-          <div className="relative w-20 h-20 rounded-full bg-primary-100 flex items-center justify-center">
-            <User size={36} className="text-primary-500" />
+          <div className="relative w-20 h-20 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden">
+            {previewUrl ? (
+              <Image src={previewUrl} alt="프로필" fill className="object-cover" />
+            ) : (
+              <User size={36} className="text-primary-500" />
+            )}
           </div>
-          <button type="button" className="text-caption text-primary-500 font-medium hover:underline">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="text-caption text-primary-500 font-medium hover:underline"
+          >
             사진 변경
           </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
         </div>
 
-        <form className="flex flex-col gap-5">
+        <form
+          className="flex flex-col gap-5"
+          onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }}
+        >
           <div className="flex flex-col gap-1.5">
             <label className="text-caption font-semibold text-gray-700">닉네임</label>
             <Input
@@ -46,6 +129,8 @@ export default function ProfileEditPage() {
               onChange={(e) => setNickname(e.target.value)}
               className="h-11"
               maxLength={20}
+              minLength={2}
+              required
             />
             <p className="text-tiny text-gray-400 text-right">{nickname.length}/20</p>
           </div>
@@ -62,8 +147,19 @@ export default function ProfileEditPage() {
             <p className="text-tiny text-gray-400 text-right">{bio.length}/100</p>
           </div>
 
-          <Button type="submit" className="w-full mt-2">
-            저장하기
+          {errorMsg && (
+            <p className="text-sm text-red-500">{errorMsg}</p>
+          )}
+          {successMsg && (
+            <p className="text-sm text-green-600">{successMsg}</p>
+          )}
+
+          <Button
+            type="submit"
+            className="w-full mt-2"
+            disabled={saveMutation.isPending || !nickname.trim()}
+          >
+            {saveMutation.isPending ? "저장 중..." : "저장하기"}
           </Button>
         </form>
       </div>

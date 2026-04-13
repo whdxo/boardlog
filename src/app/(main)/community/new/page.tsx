@@ -4,9 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, Image as ImageIcon, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ROUTES, POST_CATEGORIES } from "@/constants";
+import { POST_CATEGORIES } from "@/constants";
 import { useAuthStore } from "@/stores/authStore";
 import LoginPrompt from "@/components/common/LoginPrompt";
+import { useCreatePost } from "@/hooks/usePostMutations";
 import type { PostCategory } from "@/types";
 
 export default function NewPostPage() {
@@ -15,8 +16,9 @@ export default function NewPostPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const { isLoggedIn, isLoading } = useAuthStore();
+  const createPost = useCreatePost();
 
-  const canSubmit = title.trim() && content.trim();
+  const canSubmit = title.trim() && content.trim() && !createPost.isPending;
 
   if (isLoading) return null;
   if (!isLoggedIn) {
@@ -27,6 +29,11 @@ export default function NewPostPage() {
     );
   }
 
+  const handleSubmit = () => {
+    if (!canSubmit) return;
+    createPost.mutate({ category, title: title.trim(), content: content.trim() });
+  };
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <div className="flex items-center justify-between px-4 h-14 border-b border-gray-100 flex-shrink-0">
@@ -35,14 +42,14 @@ export default function NewPostPage() {
         </button>
         <h1 className="text-base font-bold text-gray-900">새 글 작성</h1>
         <button
-          onClick={() => canSubmit && router.push(ROUTES.COMMUNITY)}
+          onClick={handleSubmit}
           disabled={!canSubmit}
           className={cn(
             "text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors",
             canSubmit ? "bg-primary-600 text-white" : "bg-gray-100 text-gray-400 cursor-not-allowed"
           )}
         >
-          발행
+          {createPost.isPending ? "저장 중..." : "발행"}
         </button>
       </div>
 

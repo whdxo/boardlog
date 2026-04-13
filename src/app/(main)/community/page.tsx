@@ -7,21 +7,18 @@ import { PostCard } from "@/components/community/PostCard";
 import { buttonVariants } from "@/lib/button-variants";
 import { cn } from "@/lib/utils";
 import { ROUTES, POST_CATEGORIES } from "@/constants";
-import type { Post, PostCategory } from "@/types";
-
-const MOCK_POSTS: Post[] = [
-  { id: "1", userId: "u1", user: { id: "u1", nickname: "보드게임러버", createdAt: "", email: "" }, category: "review",   title: "카탄 5인 플레이 후기 — 3시간의 뜨거운 승부",          content: "드디어 5인으로 카탄을 플레이해봤는데 정말 재미있었어요...",           likeCount: 32,  commentCount: 12, viewCount: 234,  isLiked: false, createdAt: new Date(Date.now() - 2 * 3600000).toISOString(),       updatedAt: "" },
-  { id: "2", userId: "u2", user: { id: "u2", nickname: "에디터",     createdAt: "", email: "" }, category: "info",     title: "2025년 보드게임 신작 총정리 — 기대작 20선",              content: "올해도 다양한 신작 보드게임이 출시될 예정이에요...",               likeCount: 128, commentCount: 45, viewCount: 1200, isLiked: true,  createdAt: new Date(Date.now() - 24 * 3600000).toISOString(),      updatedAt: "" },
-  { id: "3", userId: "u3", user: { id: "u3", nickname: "전략왕",     createdAt: "", email: "" }, category: "strategy", title: "팬데믹 입문자를 위한 완전 공략 가이드",                    content: "팬데믹은 협력 게임 중 가장 진입 장벽이 낮은 편이에요...",         likeCount: 56,  commentCount: 18, viewCount: 480,  isLiked: false, createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),      updatedAt: "" },
-  { id: "4", userId: "u4", user: { id: "u4", nickname: "게임수집가", createdAt: "", email: "" }, category: "free",     title: "보드게임 캐비넷 공유 — 수납 어떻게 하세요?",               content: "보드게임이 100개가 넘어가니 수납이 점점 고민이네요...",           likeCount: 14,  commentCount: 23, viewCount: 156,  isLiked: false, createdAt: new Date(Date.now() - 5 * 3600000).toISOString(),       updatedAt: "" },
-  { id: "5", userId: "u5", user: { id: "u5", nickname: "파티게임러", createdAt: "", email: "" }, category: "review",   title: "코드네임 VS 텔레스트레이션 — 파티게임 비교 리뷰",          content: "비슷한 인원대의 파티게임 두 가지를 비교해봤어요...",             likeCount: 44,  commentCount: 8,  viewCount: 310,  isLiked: false, createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),      updatedAt: "" },
-];
+import { usePosts } from "@/hooks/usePosts";
+import { useAuthStore } from "@/stores/authStore";
+import type { PostCategory } from "@/types";
 
 export default function CommunityPage() {
   const [feed, setFeed] = useState<"latest" | "best" | "following">("latest");
   const [category, setCategory] = useState<PostCategory | "all">("all");
+  const { isLoggedIn } = useAuthStore();
 
-  const filtered = MOCK_POSTS.filter((p) => category === "all" || p.category === category);
+  const { data, isLoading, isError } = usePosts({ category, feed });
+
+  const posts = data?.posts ?? [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -73,9 +70,40 @@ export default function CommunityPage() {
 
       {/* 게시글 목록 */}
       <div className="max-w-screen-lg mx-auto">
-        <div className="flex flex-col">
-          {filtered.map((post) => <PostCard key={post.id} post={post} />)}
-        </div>
+        {isLoading && (
+          <div className="flex flex-col gap-4 p-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-lg h-28 animate-pulse" />
+            ))}
+          </div>
+        )}
+
+        {isError && (
+          <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+            <p className="text-sm">게시글을 불러오는 데 실패했습니다</p>
+          </div>
+        )}
+
+        {!isLoading && !isError && posts.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+            {feed === "following" && !isLoggedIn ? (
+              <>
+                <p className="text-sm font-medium">로그인 후 팔로우 피드를 볼 수 있어요</p>
+                <Link href={ROUTES.LOGIN} className="mt-3 text-sm text-primary-600 font-medium">로그인하기</Link>
+              </>
+            ) : feed === "following" ? (
+              <p className="text-sm">팔로우한 유저의 게시글이 없어요</p>
+            ) : (
+              <p className="text-sm">아직 게시글이 없어요</p>
+            )}
+          </div>
+        )}
+
+        {!isLoading && !isError && posts.length > 0 && (
+          <div className="flex flex-col">
+            {posts.map((post) => <PostCard key={post.id} post={post} />)}
+          </div>
+        )}
       </div>
     </div>
   );
