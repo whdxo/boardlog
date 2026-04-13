@@ -17,7 +17,8 @@ async function fetchGames(): Promise<Game[]> {
   const { data, error } = await supabase
     .from("games")
     .select("id, title, title_en, thumbnail, min_players, max_players, min_play_time, max_play_time, avg_rating, rating_count, price, genres, designer, publisher, release_year, bgg_id, rank, rank_change, is_new")
-    .order("rank", { ascending: true, nullsFirst: false });
+    .order("rank", { ascending: true, nullsFirst: false })
+    .limit(1000);
 
   if (error) throw error;
 
